@@ -8,10 +8,16 @@
 [Oo]bj/
 [Tt]emp/
 [Uu]nityGenerated/
-# file on crash reports
+Logs/
+MemoryCaptures/
 sysinfo.txt
-# Unity3D generated meta files
-*.pidb.meta
+*.pidb
+*.profiler
+*.tum
+*.log
+*.apk
+*.aab
+*.ipa
 
 ###
 # VS/MD solution and project files
@@ -19,6 +25,7 @@ sysinfo.txt
 [Ee]xportedObj/
 *.booproj
 *.csproj
+*.csproj.user
 *.sln
 *.suo
 *.svd
@@ -26,7 +33,8 @@ sysinfo.txt
 *.user
 *.userprefs
 *.pidb
-.DS_Store
+.vs/
+.idea/
 
 ###
 # OS generated

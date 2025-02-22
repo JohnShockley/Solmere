@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
-
+    public enum NoiseType {Perlin};
+    public NoiseType noiseType;
 
     public enum DrawMode { NoiseMap, ColorMap, Mesh };
     public DrawMode drawMode;
-    const int mapChunkSize = 241;
+    public const int mapChunkSize = 241;
     [Range(0, 6)]
     public int levelOfDetail;
 
@@ -31,7 +32,8 @@ public class MapGenerator : MonoBehaviour
 
     public void GenerateMap()
     {
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, offset);
+
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, offset, noiseType);
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
         for (int y = 0; y < mapChunkSize; y++)
