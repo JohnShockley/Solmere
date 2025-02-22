@@ -11,6 +11,7 @@ public class MapGenerator : MonoBehaviour
 {
     public enum NoiseType { Perlin };
     public NoiseType noiseType;
+    public Noise.NormalizeMode normalizeMode;
 
     public enum DrawMode { NoiseMap, ColorMap, Mesh };
     public DrawMode drawMode;
@@ -57,7 +58,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    public void RequestMapData(Vector2 center,Action<MapData> callback)
+    public void RequestMapData(Vector2 center, Action<MapData> callback)
     {
         ThreadStart threadStart = delegate
         {
@@ -67,7 +68,7 @@ public class MapGenerator : MonoBehaviour
         new Thread(threadStart).Start();
     }
 
-    void MapDataThread(Vector2 center,Action<MapData> callback)
+    void MapDataThread(Vector2 center, Action<MapData> callback)
     {
         MapData mapData = GenerateMapData(center);
         lock (mapDataThreadInfoQueue)
@@ -116,7 +117,7 @@ public class MapGenerator : MonoBehaviour
     MapData GenerateMapData(Vector2 center)
     {
 
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset, noiseType);
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset, noiseType, normalizeMode);
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
         for (int y = 0; y < mapChunkSize; y++)
@@ -128,10 +129,14 @@ public class MapGenerator : MonoBehaviour
 
                 for (int i = 0; i < regions.Length; i++)
                 {
-                    if (currentHeight <= regions[i].height)
+                    if (currentHeight >= regions[i].height)
                     {
                         colorMap[y * mapChunkSize + x] = regions[i].color;
+                    }
+                    else
+                    {
                         break;
+
                     }
                 }
 
