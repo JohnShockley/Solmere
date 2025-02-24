@@ -9,35 +9,52 @@ using static MeshGenerator;
 
 public class MapGenerator : MonoBehaviour
 {
-    public enum NoiseType { Perlin };
-    public NoiseType noiseType;
-    public Noise.NormalizeMode normalizeMode;
 
-    public enum DrawMode { NoiseMap, ColorMap, Mesh };
+    public enum NoiseType { Perlin, Simplex, PRidge, SRidge, RV, Combined }
+    public enum DrawMode { NoiseMap, ColorMap, Mesh, FalloffMap };
     public DrawMode drawMode;
+
+    public TerrainData terrainData;
+    public NoiseData noiseData;
     public const int mapChunkSize = 241;
     [Range(0, 6)]
     public int editorPreviewLOD;
 
-    public float noiseScale;
+
 
     public bool autoUpdate;
-    [Min(0)]
-    public int octaves;
-    [Range(0f, 1f)]
-    public float persistance;
-    [Min(1)]
-    public float lacunarity;
 
-    public int seed;
-    public Vector2 offset;
-    public float meshHeightMultiplier;
-    public AnimationCurve meshHeightCurve;
+    public bool combineNoiseData;
+    public NoiseData continentalnessNoiseData;
+    public NoiseData erosionNoiseData;
+    public NoiseData pvNoiseData;
+
+    public AnimationCurve continentalnessCurve;
+    public AnimationCurve erosionCurve;
+    public AnimationCurve PVCurve;
+
+
 
     public TerrainType[] regions;
+
+    float[,] falloffMap;
+
     Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
+
+
+    void OnValuesUpdated()
+    {
+        if (!Application.isPlaying)
+        {
+            DrawMapInEditor();
+        }
+    }
+    void Awake()
+    {
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b);
+    }
 
     public void DrawMapInEditor()
     {
@@ -54,7 +71,11 @@ public class MapGenerator : MonoBehaviour
         }
         else if (drawMode == DrawMode.Mesh)
         {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, terrainData.meshHeightMultiplier, terrainData.meshHeightCurve, editorPreviewLOD), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize));
+        }
+        else if (drawMode == DrawMode.FalloffMap)
+        {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b)));
         }
     }
 
@@ -88,7 +109,7 @@ public class MapGenerator : MonoBehaviour
 
     void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback)
     {
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, terrainData.meshHeightMultiplier, terrainData.meshHeightCurve, lod);
         lock (meshDataThreadInfoQueue)
         {
             meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
@@ -117,13 +138,64 @@ public class MapGenerator : MonoBehaviour
     MapData GenerateMapData(Vector2 center)
     {
 
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, seed, noiseScale, octaves, persistance, lacunarity, center + offset, noiseType, normalizeMode);
+
+        float[,] noiseMap = new float[mapChunkSize, mapChunkSize];
+        if (combineNoiseData)
+        {
+
+
+            float[,] continentalnessNoiseMap = Noise.GenerateNoiseMap(continentalnessNoiseData, mapChunkSize);
+            float[,] erosionNoiseMap = Noise.GenerateNoiseMap(erosionNoiseData, mapChunkSize);
+            float[,] pvNoiseMap = Noise.GenerateNoiseMap(pvNoiseData, mapChunkSize);
+
+            float maxLocalNoiseHeight = float.MinValue;
+            float minLocalNoiseHeight = float.MaxValue;
+
+            for (int y = 0; y < mapChunkSize; y++)
+            {
+                for (int x = 0; x < mapChunkSize; x++)
+                {
+
+                    float continentalness = continentalnessNoiseMap[x, y] * -1 + 1;
+                    float erosion = erosionNoiseMap[x, y];
+                    float pv = pvNoiseMap[x, y];
+
+                    float modifiedPV = PVCurve.Evaluate(pv);
+                    float modifiedErosion = erosionCurve.Evaluate(erosion);
+                    float finalHeight = continentalnessCurve.Evaluate(continentalness);
+                    if (finalHeight > maxLocalNoiseHeight)
+                    {
+                        maxLocalNoiseHeight = finalHeight;
+                    }
+                    else if (finalHeight < minLocalNoiseHeight)
+                    {
+                        minLocalNoiseHeight = finalHeight;
+                    }
+                    noiseMap[x, y] = finalHeight;
+                }
+            }
+            for (int y = 0; y < mapChunkSize; y++)
+            {
+                for (int x = 0; x < mapChunkSize; x++)
+                {
+                    noiseMap[x, y] = Mathf.InverseLerp(minLocalNoiseHeight, maxLocalNoiseHeight, noiseMap[x, y]);
+                }
+            }
+        }
+        else
+        {
+            noiseMap = Noise.GenerateNoiseMap(noiseData, mapChunkSize);
+        }
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
         for (int y = 0; y < mapChunkSize; y++)
         {
             for (int x = 0; x < mapChunkSize; x++)
             {
+                if (noiseData.useFalloff)
+                {
+                    noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                }
                 float currentHeight = noiseMap[x, y];
 
 
@@ -148,6 +220,42 @@ public class MapGenerator : MonoBehaviour
 
         return new MapData(noiseMap, colorMap);
 
+    }
+
+    void OnValidate()
+    {
+
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b);
+        if (terrainData != null)
+        {
+            terrainData.OnValuesUpdated -= OnValuesUpdated;
+            terrainData.OnValuesUpdated += OnValuesUpdated;
+
+        }
+        if (noiseData != null)
+        {
+            noiseData.OnValuesUpdated -= OnValuesUpdated;
+            noiseData.OnValuesUpdated += OnValuesUpdated;
+
+        }
+        if (continentalnessNoiseData != null)
+        {
+            continentalnessNoiseData.OnValuesUpdated -= OnValuesUpdated;
+            continentalnessNoiseData.OnValuesUpdated += OnValuesUpdated;
+
+        }
+        if (erosionNoiseData != null)
+        {
+            erosionNoiseData.OnValuesUpdated -= OnValuesUpdated;
+            erosionNoiseData.OnValuesUpdated += OnValuesUpdated;
+
+        }
+        if (pvNoiseData != null)
+        {
+            pvNoiseData.OnValuesUpdated -= OnValuesUpdated;
+            pvNoiseData.OnValuesUpdated += OnValuesUpdated;
+
+        }
     }
 
 
