@@ -15,12 +15,16 @@ MonoBehaviour:
   autoUpdate: 1
   noiseType: 4
   normalizeMode: 0
-  noiseScale: 40
-  octaves: 2
-  persistance: 0.12
-  lacunarity: 2
-  muteness: 0.05
+  useFalloff: 0
+  a: 1.6
+  b: 0.75
+  noiseScale: 59.9
+  octaves: 4
+  persistence: 0.53
+  lacunarity: 2.3
+  muteness: 0.165
   seed: 23
   offset: {x: 0, y: 0}
-  stepSize: 0.14
+  stepSize: 0.181
   verticalOffset: 0
+  power: 1
