@@ -19,16 +19,21 @@ public class VoronoiGenerator : MonoBehaviour
     }
 
     public DebugDisplay debugDisplay;
-
+    [Min(1f)]
     public float width;
+    [Min(1f)]
     public float height;
     public bool autoUpdate;
     [Min(3)]
     public int pointCount = 100;
-    [Range(0, .49f)]
-    public float padding;
+    [Range(0, 20)]
+    public int relaxations;
+    public bool usePoissonDiscSampling;
+    [Min(1f)]
+    public float poissonRadius;
+    [Range(1,20)]
+    public int poissonAttempts;
 
-    public bool useCentroid;
 
     private List<Vector2> points = new List<Vector2>();
     private List<Vector3> hullEdgePoints = new List<Vector3>();
@@ -51,6 +56,11 @@ public class VoronoiGenerator : MonoBehaviour
         ClearData();
         GeneratePoints();
         v = new Voronator(points, new Vector2(0, 0), new Vector2(width, height));
+        for (int i = 0; i < relaxations; i++)
+        {
+            points = v.GetClippedRelaxedPoints();
+            v = new Voronator(points, new Vector2(0, 0), new Vector2(width, height));
+        }
         d = v.Delaunator;
         StoreData();
     }
@@ -80,21 +90,22 @@ public class VoronoiGenerator : MonoBehaviour
         System.Random prng = new System.Random(seed);
 
 
-
-        float widthPadding = padding * width; // 10% of the smaller dimension as padding
-        float heightPadding = padding * height;
-
-        for (int i = 0; i < pointCount; i++)
+        if (usePoissonDiscSampling)
         {
-            float x, y;
+            points = PoissonDiscSampling.GeneratePoints(poissonRadius, new Vector2(width, height), poissonAttempts, seed);
+        }
+        else
+        {
+            for (int i = 0; i < pointCount; i++)
+            {
+                float x, y;
 
+                x = (float)prng.NextDouble() * width;
+                y = (float)prng.NextDouble() * height;
 
-            x = UnityEngine.Random.Range(widthPadding, width - widthPadding);
-            y = UnityEngine.Random.Range(heightPadding, height - heightPadding);
+                points.Add(new Vector2(x, y));
 
-
-            points.Add(new Vector2(x, y));
-
+            }
         }
     }
 
@@ -133,18 +144,9 @@ public class VoronoiGenerator : MonoBehaviour
 
     void StoreTriangleCenterPoints()
     {
-
         foreach (var t in d.GetTriangles())
         {
-
-            if (useCentroid)
-            {
-                triangleCenters.Add(t.Centroid);
-            }
-            else
-            {
-                triangleCenters.Add(t.Circumcenter);
-            }
+            triangleCenters.Add(t.Circumcenter);
         }
     }
 
