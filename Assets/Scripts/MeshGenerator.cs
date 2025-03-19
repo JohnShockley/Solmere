@@ -64,7 +64,7 @@ public static class MeshGenerator
         public Mesh CreateMesh()
         {
             Mesh mesh = new Mesh();
-            mesh.vertices = vertices; ;
+            mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.uv = uvs;
             mesh.RecalculateNormals();

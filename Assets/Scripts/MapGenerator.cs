@@ -6,16 +6,18 @@ using System.Threading;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 using static MeshGenerator;
+using static Voronoi;
 
 public class MapGenerator : MonoBehaviour
 {
 
-    public enum NoiseType { Perlin, Simplex, PRidge, SRidge, RV, Combined }
-    public enum DrawMode { NoiseMap, ColorMap, Mesh, FalloffMap };
+    public enum NoiseType { Perlin, Simplex, PRidge, SRidge, RV, Combined };
+    public enum DrawMode { NoiseMap, ColorMap, Mesh, FalloffMap, Voronoi };
     public DrawMode drawMode;
 
     public TerrainData terrainData;
     public NoiseData noiseData;
+    public VoronoiData voronoiData;
     public const int mapChunkSize = 241;
     [Range(0, 6)]
     public int editorPreviewLOD;
@@ -53,7 +55,7 @@ public class MapGenerator : MonoBehaviour
     }
     void Awake()
     {
-        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b);
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize, noiseData.a, noiseData.b);
     }
 
     public void DrawMapInEditor()
@@ -75,8 +77,14 @@ public class MapGenerator : MonoBehaviour
         }
         else if (drawMode == DrawMode.FalloffMap)
         {
-            display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b)));
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize, noiseData.a, noiseData.b)));
         }
+        else if (drawMode == DrawMode.Voronoi)
+        {
+            display.DrawTexture(TextureGenerator.TextureFromVoronoi(CreateVoronoi(voronoiData,mapChunkSize, mapChunkSize),mapChunkSize ));
+        }
+
+
     }
 
     public void RequestMapData(Vector2 center, Action<MapData> callback)
@@ -225,7 +233,7 @@ public class MapGenerator : MonoBehaviour
     void OnValidate()
     {
 
-        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize,noiseData.a,noiseData.b);
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize, noiseData.a, noiseData.b);
         if (terrainData != null)
         {
             terrainData.OnValuesUpdated -= OnValuesUpdated;
@@ -256,6 +264,11 @@ public class MapGenerator : MonoBehaviour
             pvNoiseData.OnValuesUpdated += OnValuesUpdated;
 
         }
+        if (voronoiData != null)
+        {
+            voronoiData.OnValuesUpdated -= OnValuesUpdated;
+            voronoiData.OnValuesUpdated += OnValuesUpdated;
+        }
     }
 
 
@@ -271,6 +284,7 @@ public class MapGenerator : MonoBehaviour
             this.parameter = parameter;
         }
     }
+
 }
 
 [System.Serializable]
@@ -291,4 +305,8 @@ public struct MapData
         this.heightMap = heightMap;
         this.colorMap = colorMap;
     }
+
+
+
+
 }
