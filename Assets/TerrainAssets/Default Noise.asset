@@ -18,7 +18,7 @@ MonoBehaviour:
   useFalloff: 0
   a: 1.6
   b: 0.75
-  noiseScale: 59.9
+  noiseScale: 34.2
   octaves: 4
   persistence: 0.53
   lacunarity: 2.3

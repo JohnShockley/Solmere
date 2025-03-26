@@ -32,18 +32,12 @@ public static class Voronoi
 
     }
     [System.Serializable]
-    public struct Island
+    public struct IslandData
     {
-        [Min(0)]
-        public int startID;
-        [Range(0, 1f)]
-        public double height;
         [Range(0, .99f)]
         public double heightDecay;
-        public bool isLarge;
         [Range(0, 0.5f)]
         public double sharpness;
-
     }
 
     public static List<VoronoiCell> CreateVoronoi(VoronoiData voronoiData, int width, int height)
@@ -89,32 +83,28 @@ public static class Voronoi
     public static void AddIsland(VoronoiData voronoiData)
     {
 
-        foreach (Island islandData in voronoiData.islands)
+        System.Random prng = new System.Random(voronoiData.seed);
+        for (int i = 0; i < voronoiData.islandCount; i++)
         {
-            if (islandData.startID > voronoiCells.Count - 1)
+            if (i == 0)
             {
-                continue;
-            }
-
-            if (islandData.isLarge)
-            {
-                AddLargeIsland(islandData, voronoiData.seed);
+                AddLargeIsland(prng, voronoiData);
             }
             else
             {
-                AddSmallIsland(islandData);
+                AddSmallIsland(prng, voronoiData);
             }
         }
     }
-    private static void AddLargeIsland(Island islandData, int seed)
+    private static void AddLargeIsland(System.Random prng, VoronoiData voronoiData)
     {
-        System.Random prng = new System.Random(seed);
+        ;
 
 
-        int startingCellIndex = islandData.startID;
-        double height = islandData.height;
-        double heightDecay = islandData.heightDecay;
-        double sharpness = islandData.sharpness;
+        int startingCellIndex = prng.Next(voronoiCells.Count);
+        double height = .9f;
+        double heightDecay = .9f;
+        double sharpness = voronoiData.islandData.sharpness;
         Queue<int> q = new Queue<int>();
 
         List<int> deuseList = new List<int>();
@@ -160,11 +150,14 @@ public static class Voronoi
         }
 
     }
-    private static void AddSmallIsland(Island islandData)
+    private static void AddSmallIsland(System.Random prng, VoronoiData voronoiData)
     {
-        int startingCellIndex = islandData.startID;
-        double height = islandData.height;
-        double heightDecay = islandData.heightDecay;
+
+
+        int startingCellIndex = prng.Next(voronoiCells.Count);
+
+        double height = prng.NextDouble();
+        double heightDecay = voronoiData.islandData.heightDecay;
         Queue<int> q = new Queue<int>();
 
         List<int> deuseList = new List<int>();

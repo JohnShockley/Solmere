@@ -26,15 +26,6 @@ public class MapGenerator : MonoBehaviour
 
     public bool autoUpdate;
 
-    public bool combineNoiseData;
-    public NoiseData continentalnessNoiseData;
-    public NoiseData erosionNoiseData;
-    public NoiseData pvNoiseData;
-
-    public AnimationCurve continentalnessCurve;
-    public AnimationCurve erosionCurve;
-    public AnimationCurve PVCurve;
-
 
 
     public TerrainType[] regions;
@@ -81,10 +72,33 @@ public class MapGenerator : MonoBehaviour
         }
         else if (drawMode == DrawMode.Voronoi)
         {
-            display.DrawTexture(TextureGenerator.TextureFromVoronoi(CreateVoronoi(voronoiData,mapChunkSize, mapChunkSize),mapChunkSize ));
+            display.DrawTexture(TextureGenerator.TextureFromVoronoi(CreateVoronoi(voronoiData, mapChunkSize, mapChunkSize), mapChunkSize));
         }
 
 
+    }
+    public static float[,] HeightFromVoronoi(List<VoronoiCell> cells, int sideLength)
+    {
+        float[,] heightMap = new float[sideLength, sideLength];
+
+        // Loop through each pixel in the texture
+        for (int y = 0; y < sideLength; y++)
+        {
+            for (int x = 0; x < sideLength; x++)
+            {
+                Vector2 pixelPos = new Vector2(x, y);
+
+                int voronoiIndex = Find(pixelPos);
+
+                float height = (float)cells[voronoiIndex].height;
+                heightMap[x,y] = height;
+
+            }
+
+        }
+
+    
+        return heightMap;
     }
 
     public void RequestMapData(Vector2 center, Action<MapData> callback)
@@ -148,52 +162,11 @@ public class MapGenerator : MonoBehaviour
 
 
         float[,] noiseMap = new float[mapChunkSize, mapChunkSize];
-        if (combineNoiseData)
-        {
+
+        noiseMap = Noise.GenerateNoiseMap(noiseData, mapChunkSize);
 
 
-            float[,] continentalnessNoiseMap = Noise.GenerateNoiseMap(continentalnessNoiseData, mapChunkSize);
-            float[,] erosionNoiseMap = Noise.GenerateNoiseMap(erosionNoiseData, mapChunkSize);
-            float[,] pvNoiseMap = Noise.GenerateNoiseMap(pvNoiseData, mapChunkSize);
-
-            float maxLocalNoiseHeight = float.MinValue;
-            float minLocalNoiseHeight = float.MaxValue;
-
-            for (int y = 0; y < mapChunkSize; y++)
-            {
-                for (int x = 0; x < mapChunkSize; x++)
-                {
-
-                    float continentalness = continentalnessNoiseMap[x, y] * -1 + 1;
-                    float erosion = erosionNoiseMap[x, y];
-                    float pv = pvNoiseMap[x, y];
-
-                    float modifiedPV = PVCurve.Evaluate(pv);
-                    float modifiedErosion = erosionCurve.Evaluate(erosion);
-                    float finalHeight = continentalnessCurve.Evaluate(continentalness);
-                    if (finalHeight > maxLocalNoiseHeight)
-                    {
-                        maxLocalNoiseHeight = finalHeight;
-                    }
-                    else if (finalHeight < minLocalNoiseHeight)
-                    {
-                        minLocalNoiseHeight = finalHeight;
-                    }
-                    noiseMap[x, y] = finalHeight;
-                }
-            }
-            for (int y = 0; y < mapChunkSize; y++)
-            {
-                for (int x = 0; x < mapChunkSize; x++)
-                {
-                    noiseMap[x, y] = Mathf.InverseLerp(minLocalNoiseHeight, maxLocalNoiseHeight, noiseMap[x, y]);
-                }
-            }
-        }
-        else
-        {
-            noiseMap = Noise.GenerateNoiseMap(noiseData, mapChunkSize);
-        }
+        noiseMap = HeightFromVoronoi(CreateVoronoi(voronoiData, mapChunkSize, mapChunkSize), mapChunkSize);
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
         for (int y = 0; y < mapChunkSize; y++)
@@ -244,24 +217,6 @@ public class MapGenerator : MonoBehaviour
         {
             noiseData.OnValuesUpdated -= OnValuesUpdated;
             noiseData.OnValuesUpdated += OnValuesUpdated;
-
-        }
-        if (continentalnessNoiseData != null)
-        {
-            continentalnessNoiseData.OnValuesUpdated -= OnValuesUpdated;
-            continentalnessNoiseData.OnValuesUpdated += OnValuesUpdated;
-
-        }
-        if (erosionNoiseData != null)
-        {
-            erosionNoiseData.OnValuesUpdated -= OnValuesUpdated;
-            erosionNoiseData.OnValuesUpdated += OnValuesUpdated;
-
-        }
-        if (pvNoiseData != null)
-        {
-            pvNoiseData.OnValuesUpdated -= OnValuesUpdated;
-            pvNoiseData.OnValuesUpdated += OnValuesUpdated;
 
         }
         if (voronoiData != null)

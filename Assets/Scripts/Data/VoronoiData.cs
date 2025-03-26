@@ -18,5 +18,7 @@ public class VoronoiData : UpdatableData
     [Range(1, 20)]
     public int poissonAttempts;
     [SerializeField]
-    public List<Island> islands;
+    public IslandData islandData;
+    [Min(1)]
+    public int islandCount;
 }

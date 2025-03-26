@@ -13,9 +13,13 @@ MonoBehaviour:
   m_Name: Default Voronoi
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  seed: 67
-  pointCount: 800
+  seed: 0
+  pointCount: 8000
   relaxations: 2
   usePoissonDiscSampling: 0
   poissonRadius: 9
   poissonAttempts: 20
+  islandData:
+    heightDecay: 0.9599999785423279
+    sharpness: 0.10499999672174454
+  islandCount: 15
