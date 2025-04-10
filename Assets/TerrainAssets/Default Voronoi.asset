@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Default Voronoi
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  seed: 0
+  seed: 96367890
   pointCount: 8000
   relaxations: 2
   usePoissonDiscSampling: 0

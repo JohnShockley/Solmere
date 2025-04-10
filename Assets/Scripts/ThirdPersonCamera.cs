@@ -26,7 +26,7 @@ public class ThirdPersonCamera : MonoBehaviour
         targetOffset = defaultOffset;
         if (inCombat)
         {
-
+            Debug.Log("combat");
             Vector2 mousePos = Input.mousePosition;
             float normalizedX = (mousePos.x / Screen.width) * 2 - 1; // -1 to 1 range
             float normalizedY = (mousePos.y / Screen.height) * 2 - 1; // -1 to 1 range
