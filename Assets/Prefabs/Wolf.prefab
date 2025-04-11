@@ -660,6 +660,8 @@ GameObject:
   - component: {fileID: 4121551779626996491}
   - component: {fileID: 3691510916694360271}
   - component: {fileID: 7393044399298468581}
+  - component: {fileID: -5476161084380994073}
+  - component: {fileID: 4059724009410263631}
   m_Layer: 0
   m_Name: Wolf
   m_TagString: Untagged
@@ -714,16 +716,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed:
-    baseValue: 7
+    BaseValue: 0
     _value: 0
   rotationSpeed:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
   gravityMultiplier:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
   jumpPower:
-    baseValue: 4
+    BaseValue: 0
     _value: 0
 --- !u!114 &7393044399298468581
 MonoBehaviour:
@@ -740,14 +742,44 @@ MonoBehaviour:
   health:
     Current: 0
     max:
-      baseValue: 100
+      BaseValue: 0
       _value: 0
     min:
-      baseValue: 0
+      BaseValue: 0
       _value: 0
   healthRegen:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
+--- !u!114 &-5476161084380994073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7404602202590489069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 3
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
+--- !u!114 &4059724009410263631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7404602202590489069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17bad4ca94a89b94c855da357f01a6a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7544229725966648343
 GameObject:
   m_ObjectHideFlags: 0

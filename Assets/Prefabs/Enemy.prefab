@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4365864943293398989}
   - component: {fileID: 9113478194965491949}
   - component: {fileID: 497811497862441196}
+  - component: {fileID: -9190916631953124281}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -123,13 +124,13 @@ MonoBehaviour:
   health:
     Current: 0
     max:
-      baseValue: 100
+      BaseValue: 0
       _value: 0
     min:
-      baseValue: 0
+      BaseValue: 0
       _value: 0
   healthRegen:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
 --- !u!114 &9113478194965491949
 MonoBehaviour:
@@ -156,17 +157,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed:
-    baseValue: 6
+    BaseValue: 0
     _value: 0
   rotationSpeed:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
   gravityMultiplier:
-    baseValue: 1
+    BaseValue: 0
     _value: 0
   jumpPower:
-    baseValue: 4
+    BaseValue: 0
     _value: 0
+--- !u!114 &-9190916631953124281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004162260098031544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17bad4ca94a89b94c855da357f01a6a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2329962501081279707
 GameObject:
   m_ObjectHideFlags: 0
