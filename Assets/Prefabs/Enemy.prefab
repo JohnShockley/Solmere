@@ -16,6 +16,9 @@ GameObject:
   - component: {fileID: 9113478194965491949}
   - component: {fileID: 497811497862441196}
   - component: {fileID: -9190916631953124281}
+  - component: {fileID: 6487016439456275605}
+  - component: {fileID: 6121181417984399645}
+  - component: {fileID: 4911346322161981196}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -132,6 +135,20 @@ MonoBehaviour:
   healthRegen:
     BaseValue: 0
     _value: 0
+  dodgeChance:
+    BaseValue: 0
+    _value: 0
+  dodgePower:
+    BaseValue: 0
+    _value: 0
+  armor:
+    Current: 0
+    max:
+      BaseValue: 0
+      _value: 0
+    min:
+      BaseValue: 0
+      _value: 0
 --- !u!114 &9113478194965491949
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,6 +197,78 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17bad4ca94a89b94c855da357f01a6a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6487016439456275605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004162260098031544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
+--- !u!114 &6121181417984399645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004162260098031544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3a1f09b8467dd34d810c0f45ce7cf91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4911346322161981196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004162260098031544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58bcb4c36f93d6e45b192816bbfb8016, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  criticalChance:
+    BaseValue: 0
+    _value: 0
+  criticalPower:
+    BaseValue: 0
+    _value: 0
+  parryChance:
+    BaseValue: 0
+    _value: 0
+  parryPower:
+    BaseValue: 0
+    _value: 0
+  blockChance:
+    BaseValue: 0
+    _value: 0
+  blockPower:
+    BaseValue: 0
+    _value: 0
+  deflectChance:
+    BaseValue: 0
+    _value: 0
+  deflectPower:
+    BaseValue: 0
+    _value: 0
+  hitChance:
+    BaseValue: 0
+    _value: 0
+  hitPower:
+    BaseValue: 0
+    _value: 0
 --- !u!1 &2329962501081279707
 GameObject:
   m_ObjectHideFlags: 0

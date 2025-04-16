@@ -237,6 +237,7 @@ GameObject:
   - component: {fileID: 118122468715627234}
   - component: {fileID: -7206794623497152688}
   - component: {fileID: 7848388464966455889}
+  - component: {fileID: -9181164264325785586}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -431,6 +432,20 @@ MonoBehaviour:
   healthRegen:
     BaseValue: 0
     _value: 0
+  dodgeChance:
+    BaseValue: 0
+    _value: 0
+  dodgePower:
+    BaseValue: 0
+    _value: 0
+  armor:
+    Current: 0
+    max:
+      BaseValue: 0
+      _value: 0
+    min:
+      BaseValue: 0
+      _value: 0
 --- !u!114 &3669641118199168417
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -503,3 +518,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44bb26709baf4e645b25a879678f5118, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentTarget: {fileID: 0}
+--- !u!114 &-9181164264325785586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5980495222626168611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58bcb4c36f93d6e45b192816bbfb8016, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  criticalChance:
+    BaseValue: 0
+    _value: 0
+  criticalPower:
+    BaseValue: 0
+    _value: 0
+  parryChance:
+    BaseValue: 0
+    _value: 0
+  parryPower:
+    BaseValue: 0
+    _value: 0
+  blockChance:
+    BaseValue: 0
+    _value: 0
+  blockPower:
+    BaseValue: 0
+    _value: 0
+  deflectChance:
+    BaseValue: 0
+    _value: 0
+  deflectPower:
+    BaseValue: 0
+    _value: 0
+  hitChance:
+    BaseValue: 0
+    _value: 0
+  hitPower:
+    BaseValue: 0
+    _value: 0
