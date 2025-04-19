@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-
+[Serializable]
 public struct DamageEvent
 {
     public GameObject Source;    // Who caused the damage (attacker, trap, environment, etc)
@@ -11,11 +11,27 @@ public struct DamageEvent
     public DamageType _DamageType;      // Physical, Magic, True
     public AttackType _AttackType;      // Melee, Projectile, AOE
 
+    public float HitChance;
     public bool IsCritical;      // Was this a critical hit?
 
     public AttackFlags Flags;
+    [Serializable]
+    public class DamageLogEntry
+    {
+        public DamageEvent damageEvent;
+        public AttackOutcome attackOutcome;
+        public GameObject Source;
+        public GameObject Target;
+        public DamageLogEntry(DamageEvent damageEvent, AttackOutcome attackOutcome)
+        {
+            this.damageEvent = damageEvent;
+            this.attackOutcome = attackOutcome;
+            this.Source = damageEvent.Source;
+            Target = damageEvent.Target;
+        }
+    }
 
-    public DamageEvent(GameObject source, GameObject target,  float attackPower, DamageType damageType, AttackType attackType, AttackFlags flags, bool isCritical = false)
+    public DamageEvent(GameObject source, GameObject target, float attackPower, DamageType damageType, AttackType attackType, AttackFlags flags, float hitChance, bool isCritical = false)
     {
         Source = source;
         Target = target;
@@ -23,8 +39,9 @@ public struct DamageEvent
         _DamageType = damageType;
         _AttackType = attackType;
         Flags = flags;
+        HitChance = hitChance;
         IsCritical = isCritical;
-       
+
     }
 }
 [Flags]
@@ -51,7 +68,7 @@ public enum AttackType
     Projectile,
     AOE,
 }
-
+[SerializeField]
 public enum AttackOutcome
 {
     Pending,        // Not resolved yet

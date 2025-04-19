@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static DamageEvent;
 
 
 [RequireComponent(typeof(PropertyRegistryComponent))]
@@ -15,23 +16,12 @@ public class HealthComponent : MonoBehaviour
 
     [SerializeField] private Resource armor;
 
-    private CombatComponent combatComponent;
     private PropertyRegistryComponent propertyRegistry;
-
-    public List<(DamageEvent damageEvent, AttackOutcome attackOutcome)> damageReceivedLog;
-    private List<(DamageEvent damageEvent, AttackOutcome attackOutcome)> damageDoneLog;
 
     void Awake()
     {
 
-        damageReceivedLog = new List<(DamageEvent, AttackOutcome)>();
-        CombatComponent cc = GetComponent<CombatComponent>();
-        if (cc)
-        {
-            damageDoneLog = cc.damageDoneLog;
-        }
 
-        combatComponent = GetComponent<CombatComponent>();
         propertyRegistry = GetComponent<PropertyRegistryComponent>();
 
         propertyRegistry.Register("maxHealth", health.GetMax());
@@ -64,81 +54,23 @@ public class HealthComponent : MonoBehaviour
         }
     }
 
-    public void ReceiveDamage(DamageEvent damageEvent)
+    public bool ReceiveDamage(float damage)
     {
-        if (DidDodge(ref damageEvent))
-        {
-            return;
-        }
-        if (combatComponent && combatComponent.DidDefend(ref damageEvent))
-        {
-            return;
-        }
-        if (DidResist(ref damageEvent))
-        {
-            return;
-        }
-        UpdateLog(damageEvent, AttackOutcome.Hit);
-
-        health.Add(-damageEvent.AttackPower);
-        CheckDeath(ref damageEvent);
+        health.Add(-damage);
+        return CheckDeath();
     }
 
-    private bool DidDodge(ref DamageEvent damageEvent)
+    private bool CheckDeath()
     {
-        if (damageEvent.Flags.HasFlag(AttackFlags.CannotBeDodged))
+        bool didDie = health.GetCurrent() == 0;
+        if (didDie)
         {
-            return false;
-        }
-
-        float amount = (float)random.NextDouble();
-
-        bool dodged = amount < dodgeChance.Value;
-        if (dodged)
-        {
-            UpdateLog(damageEvent, AttackOutcome.Dodged);
-        }
-        return dodged;
-    }
-    private bool DidResist(ref DamageEvent damageEvent)
-    {
-        if (damageEvent.Flags.HasFlag(AttackFlags.CannotBeResisted))
-        {
-            return false;
-        }
-        if (armor.GetCurrent() >= damageEvent.AttackPower)
-        {
-            UpdateLog(damageEvent, AttackOutcome.Resisted);
-            armor.Add(-.25f * damageEvent.AttackPower);
-            return true;
-        }
-        else
-        {
-            UpdateLog(damageEvent, AttackOutcome.Pierced);
-            damageEvent.AttackPower -= armor.GetCurrent();
-            armor.Add(-.5f * damageEvent.AttackPower);
-            return false;
-        }
-    }
-    private void CheckDeath(ref DamageEvent damageEvent)
-    {
-        if (health.GetCurrent() == 0)
-        {
-            UpdateLog(damageEvent, AttackOutcome.Fatal);
             OnDeath();
         }
+        return didDie;
     }
     private void OnDeath()
     {
         Debug.Log($"{health} depleted!");
-    }
-
-    private void UpdateLog(DamageEvent damageEvent, AttackOutcome attackOutcome)
-    {
-        damageReceivedLog.Add((damageEvent, attackOutcome));
-        damageDoneLog?.Add((damageEvent, attackOutcome));
-
-
-        Debug.Log("Your attack was " + attackOutcome);
     }
 }
