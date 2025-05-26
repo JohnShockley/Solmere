@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static DamageEvent;
 
 
 [RequireComponent(typeof(PropertyRegistryComponent))]

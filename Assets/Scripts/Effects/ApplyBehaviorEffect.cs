@@ -1,14 +1,11 @@
-// using UnityEngine;
+using UnityEngine;
 
-// [CreateAssetMenu(menuName = "Effects/ApplyBehavior")]
-// public class ApplyBehaviorEffect : Effect
-// {
-//     public Behavior behaviorTemplate;
+[CreateAssetMenu(menuName = "Effects/ApplyBehavior")]
+public class ApplyBehaviorEffect : Effect
+{
+    public override void Apply(EffectContext context)
+    {
+        throw new System.NotImplementedException();
+    }
+}
 
-//     public override void Execute(GameObject target)
-//     {
-//         var receiver = target.GetComponent<EffectReceiver>();
-//         if (receiver != null)
-//             receiver.ApplyBehavior(Instantiate(behaviorTemplate));
-//     }
-// }
