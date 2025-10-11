@@ -61,10 +61,10 @@ public class CombatComponent : MonoBehaviour
 
     void Update()
     {
-        if (targetingComponent.Target && Time.time >= nextDamageTime)
+        if (targetingComponent.HasTarget() && Time.time >= nextDamageTime)
         {
 
-            GameObject target = targetingComponent.Target;
+            GameObject target = targetingComponent.GetTarget();
 
             DoDamage(target);
 

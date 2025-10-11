@@ -73,6 +73,9 @@ public class MapGenerator : MonoBehaviour
         else if (drawMode == DrawMode.Voronoi)
         {
             display.DrawTexture(TextureGenerator.TextureFromVoronoi(CreateVoronoi(voronoiData, mapChunkSize, mapChunkSize), mapChunkSize));
+#if UNITY_EDITOR
+            UnityEditor.SceneView.RepaintAll(); // <- refresh Gizmos immediately
+#endif
         }
 
 
@@ -91,13 +94,13 @@ public class MapGenerator : MonoBehaviour
                 int voronoiIndex = Find(pixelPos);
 
                 float height = (float)cells[voronoiIndex].height;
-                heightMap[x,y] = height;
+                heightMap[x, y] = height;
 
             }
 
         }
 
-    
+
         return heightMap;
     }
 

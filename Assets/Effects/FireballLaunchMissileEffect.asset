@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d333940dda206d4498ac669df389bad, type: 3}
-  m_Name: New Launch Missile Effect
+  m_Name: FireballLaunchMissileEffect
   m_EditorClassIdentifier: 
   TargetMode: 0
   OnImpact: {fileID: 11400000, guid: bb34a3cdd3697b7469097d8a0c4dfe55, type: 2}

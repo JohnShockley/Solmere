@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TargetingComponent : MonoBehaviour
 {
-    public GameObject Target { get; private set; }
+    private GameObject Target;
     public void SetTarget(GameObject target)
     {
         if (target == null || target.GetComponent<TargetableComponent>() == null)
@@ -10,6 +10,20 @@ public class TargetingComponent : MonoBehaviour
             return;
         }
         Target = target;
+    }
+
+    public bool HasTarget()
+    {
+        return (bool)Target;
+    }
+
+    public GameObject GetTarget()
+    {
+        if (HasTarget())
+        {
+            return Target;
+        }
+        return null;
     }
 
     public void ClearTarget()

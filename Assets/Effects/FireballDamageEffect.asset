@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67d512e3407297e418c14b93dfe5871a, type: 3}
-  m_Name: New Damage Effect
+  m_Name: FireballDamageEffect
   m_EditorClassIdentifier: 
   damageType: 1
   attackType: 1
