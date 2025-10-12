@@ -42,13 +42,135 @@ namespace VoronatorSharp
         // In this case, we don't use a delaunay triangulation at all.
         // Instead we use Delaunator.Hull which contains an ordered set of vertices.
         Vector2? collinearNormal;
+        private List<Vector2> clipPolygon; // arbitrary polygon
 
-        public Voronator(IList<Vector2> points, Vector2 clipMin, Vector2 clipMax)
+        public Voronator(IList<Vector2> points, List<Vector2> polygon)
         {
             Init(points);
-            this.clipMin = clipMin;
-            this.clipMax = clipMax;
+            clipPolygon = polygon;
         }
+
+        private List<Vector2> ClipPolygon(List<Vector2> subject, List<Vector2> clip)
+        {
+            if (subject == null || subject.Count < 3 || clip == null || clip.Count < 3)
+                return new List<Vector2>();
+
+            List<Vector2> output = new List<Vector2>(subject);
+
+            for (int i = 0; i < clip.Count; i++)
+            {
+                Vector2 A = clip[i];
+                Vector2 B = clip[(i + 1) % clip.Count];
+                List<Vector2> input = new List<Vector2>(output);
+                output.Clear();
+
+                if (input.Count == 0)
+                    break;
+
+                for (int j = 0; j < input.Count; j++)
+                {
+                    Vector2 P = input[j];
+                    Vector2 Q = input[(j + 1) % input.Count];
+
+                    bool PInside = IsInside(A, B, P);
+                    bool QInside = IsInside(A, B, Q);
+
+                    if (PInside && QInside)
+                    {
+                        output.Add(Q);
+                    }
+                    else if (PInside && !QInside)
+                    {
+                        if (Intersect(A, B, P, Q, out Vector2 inter)) output.Add(inter);
+                    }
+                    else if (!PInside && QInside)
+                    {
+                        if (Intersect(A, B, P, Q, out Vector2 inter)) output.Add(inter);
+                        output.Add(Q);
+                    }
+                }
+            }
+
+            // Fallback: if everything was clipped away, return the original polygon
+            if (output.Count < 3)
+                return new List<Vector2>(subject);
+
+            return output;
+        }
+
+        private bool IsInside(Vector2 a, Vector2 b, Vector2 p)
+        {
+            return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) >= 0;
+        }
+
+        // Line segment intersection
+        private bool Intersect(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            float A1 = a2.y - a1.y;
+            float B1 = a1.x - a2.x;
+            float C1 = A1 * a1.x + B1 * a1.y;
+
+            float A2 = b2.y - b1.y;
+            float B2 = b1.x - b2.x;
+            float C2 = A2 * b1.x + B2 * b1.y;
+
+            float det = A1 * B2 - A2 * B1;
+            if (Mathf.Abs(det) < 1e-6f) return false; // parallel
+
+            intersection = new Vector2((B2 * C1 - B1 * C2) / det, (A1 * C2 - A2 * C1) / det);
+            return true;
+        }
+
+        private Vector2? IntersectRayPolygon(Vector2 origin, Vector2 direction, List<Vector2> polygon)
+        {
+            direction.Normalize(); // normalize direction to be safe
+
+            float minDist = float.MaxValue;
+            Vector2? closest = null;
+
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                Vector2 a = polygon[i];
+                Vector2 b = polygon[(i + 1) % polygon.Count];
+
+                if (RaySegmentIntersection(origin, direction, a, b, out Vector2 intersection))
+                {
+                    float dist = Vector2.Dot(intersection - origin, direction);
+                    if (dist > 0 && dist < minDist)
+                    {
+                        minDist = dist;
+                        closest = intersection;
+                    }
+                }
+            }
+
+            return closest;
+        }
+
+        private bool RaySegmentIntersection(Vector2 origin, Vector2 dir, Vector2 a, Vector2 b, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            Vector2 ab = b - a;
+            Vector2 ao = origin - a;
+            float denom = Cross(dir, ab);
+
+            if (Mathf.Abs(denom) < 1e-6f)
+                return false; // parallel
+
+            float t = Cross(ao, ab) / denom;
+            float u = Cross(ao, dir) / denom;
+
+            if (t >= 0 && u >= 0 && u <= 1)
+            {
+                intersection = origin + dir * t;
+                return true;
+            }
+            return false;
+        }
+
+        private float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
+
 
         public Voronator(IList<Vector2> points)
         {
@@ -228,34 +350,74 @@ namespace VoronatorSharp
         /// </summary>
         public List<Vector2> GetClippedPolygon(int i)
         {
-            // degenerate case (1 valid point: return the box)
-            if (i == 0 && d.Hull.Length == 1)
+            var polygon = GetPolygon(i);
+            if (polygon == null || polygon.Count == 0) return new List<Vector2>();
+
+            bool infinite = vectors[i * 2] != default || vectors[i * 2 + 1] != default;
+
+            List<Vector2> extended = new List<Vector2>(polygon);
+
+            if (infinite)
             {
-                return new List<Vector2>
+                Vector2 dir0 = vectors[i * 2];
+                Vector2 dir1 = vectors[i * 2 + 1];
+
+                // Extend first point
+                Vector2? p0 = IntersectRayPolygon(polygon[0], dir0, clipPolygon);
+                if (p0.HasValue)
                 {
-                    new Vector2(clipMax.x, clipMin.y),
-                    clipMax,
-                    new Vector2(clipMin.x, clipMax.y),
-                    clipMin,
-                };
+                    extended.Insert(0, p0.Value);
+                }
+                else
+                {
+                    // If ray misses polygon (e.g., tangent), extend far beyond bounds
+                    extended.Insert(0, polygon[0] + dir0.normalized * 10000f);
+                }
+
+                // Extend last point
+                Vector2? p1 = IntersectRayPolygon(polygon[polygon.Count - 1], dir1, clipPolygon);
+                if (p1.HasValue)
+                {
+                    extended.Add(p1.Value);
+                }
+                else
+                {
+                    extended.Add(polygon[polygon.Count - 1] + dir1.normalized * 10000f);
+                }
             }
 
-            if (collinearNormal != null)
-            {
-                return ClipCollinear(i);
-            }
+            // Final clip (safety, ensures all inside polygon)
+            var clipped = ClipPolygon(extended, clipPolygon);
+            if (clipped.Count == 0)
+                clipped = extended;
 
-            var points = GetPolygon(i);
-            var v = i * 2;
-            if (vectors[v] == default)
-            {
-                return ClipFinite(i, points);
-            }
-            else
-            {
-                return ClipInfinite(i, points, vectors[v], vectors[v + 1]);
-            }
+
+
+            clipped = clipped.Select(p => SnapToBoundary(p, clipPolygon)).ToList();
+
+            return clipped;
         }
+        private Vector2 SnapToBoundary(Vector2 point, List<Vector2> boundary, float threshold = 0.01f)
+        {
+            for (int i = 0; i < boundary.Count; i++)
+            {
+                Vector2 a = boundary[i];
+                Vector2 b = boundary[(i + 1) % boundary.Count];
+                Vector2 proj = ProjectPointToSegment(point, a, b);
+                if ((proj - point).sqrMagnitude < threshold * threshold)
+                    return proj;
+            }
+            return point;
+        }
+
+        private Vector2 ProjectPointToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float t = Vector2.Dot(p - a, ab) / ab.sqrMagnitude;
+            t = Mathf.Clamp01(t);
+            return a + ab * t;
+        }
+
 
         /// Clips vornoi cell i, a polygon with the given points to the clipping rectangle.
         /// Returns null if the the polygon doesn't intersect the bounds.

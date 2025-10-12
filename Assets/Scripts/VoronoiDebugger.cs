@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using static Voronoi;
 
 [ExecuteInEditMode]
 public class VoronoiDebugger : MonoBehaviour
@@ -7,30 +9,121 @@ public class VoronoiDebugger : MonoBehaviour
     [Header("Gizmo Settings")]
     public bool drawPoints = true;
     public bool drawEdges = true;
-    public bool drawCells = false;
+    public bool drawCells = true;
     public bool drawCellIDs = false;
+    public bool drawUnclippedCells = true;
+    public bool drawClippingBoundary = true;
+    public bool drawNeighborConnections = false;
+    public bool drawCircumcenters = true;
+
+    [Header("Colors")]
     public Color pointColor = Color.yellow;
     public Color edgeColor = Color.cyan;
     public Color cellColor = new Color(0, 1, 0, 0.15f);
+    public Color unclippedColor = new Color(1, 0, 1, 0.5f);
+    public Color boundaryColor = Color.white;
+    public Color neighborColor = new Color(1, 0.5f, 0, 0.3f);
+    public Color circumcenterColor = Color.red;
+
+    [Header("Size Settings")]
+    public float pointSize = 0.2f;
+    public float lineThickness = 2f;
+    public float circumcenterSize = 0.15f;
+
+    public List<List<VoronoiCell>> voronoiLayers = new List<List<VoronoiCell>>();
 
     private void OnDrawGizmos()
     {
-        // Early-out if no data yet
         var cells = GetVoronoiCells();
-        if (cells == null || cells.Count == 0)
-            return;
+        if (cells == null) return;
 
+        // Draw unclipped cells first (if enabled)
+        if (drawUnclippedCells && Voronoi.v != null)
+        {
+            for (int i = 0; i < cells.Count; i++)
+            {
+                var unclippedPoly = Voronoi.v.GetPolygon(i);
+                if (unclippedPoly != null && unclippedPoly.Count > 1)
+                {
+                    Gizmos.color = unclippedColor;
+                    for (int j = 0; j < unclippedPoly.Count; j++)
+                    {
+                        Vector3 from = new Vector3(unclippedPoly[j].x, 0, unclippedPoly[j].y);
+                        Vector3 to = new Vector3(unclippedPoly[(j + 1) % unclippedPoly.Count].x, 0, unclippedPoly[(j + 1) % unclippedPoly.Count].y);
+                        Gizmos.DrawLine(from, to);
+                    }
+                }
+            }
+        }
+
+        // Draw clipped cells
         if (drawCells)
+        {
+            Gizmos.color = cellColor;
             DrawVoronoiCells(cells);
+        }
 
-        if (drawPoints)
-            DrawPoints(cells);
-
+        // Draw edges
         if (drawEdges)
+        {
             DrawEdges();
+        }
 
+        // Draw points
+        if (drawPoints)
+        {
+            DrawPoints(cells);
+        }
+
+        // Draw neighbor connections
+        if (drawNeighborConnections)
+        {
+            Gizmos.color = neighborColor;
+            foreach (var cell in cells)
+            {
+                Vector3 from = new Vector3(cell.coordinate.x, 0, cell.coordinate.y);
+                foreach (var neighborId in cell.neighborIDs)
+                {
+                    var neighbor = cells[neighborId];
+                    Vector3 to = new Vector3(neighbor.coordinate.x, 0, neighbor.coordinate.y);
+                    Gizmos.DrawLine(from, to);
+                }
+            }
+        }
+
+        // Draw circumcenters
+        if (drawCircumcenters && Voronoi.v != null)
+        {
+            Gizmos.color = circumcenterColor;
+            var circumcenters = Voronoi.v.TriangleVertices;
+            foreach (var center in circumcenters)
+            {
+                Gizmos.DrawSphere(new Vector3(center.x, 0, center.y), circumcenterSize);
+            }
+        }
+
+        // Draw cell IDs
         if (drawCellIDs)
+        {
             DrawIDs(cells);
+        }
+
+        // Draw clipping boundary
+        if (drawClippingBoundary && Voronoi.v != null)
+        {
+            Gizmos.color = boundaryColor;
+            // Draw the bounds as lines
+            var bounds = GetVoronoiBounds();
+            if (bounds.Count > 0)
+            {
+                for (int i = 0; i < bounds.Count; i++)
+                {
+                    Vector3 from = new Vector3(bounds[i].x, 0, bounds[i].y);
+                    Vector3 to = new Vector3(bounds[(i + 1) % bounds.Count].x, 0, bounds[(i + 1) % bounds.Count].y);
+                    Gizmos.DrawLine(from, to);
+                }
+            }
+        }
     }
 
     private List<Voronoi.VoronoiCell> GetVoronoiCells()
@@ -47,7 +140,7 @@ public class VoronoiDebugger : MonoBehaviour
         Gizmos.color = pointColor;
         foreach (var cell in cells)
         {
-            Gizmos.DrawSphere(new Vector3(cell.coordinate.x, 0, cell.coordinate.y), 0.2f);
+            Gizmos.DrawSphere(new Vector3(cell.coordinate.x, 0, cell.coordinate.y), pointSize);
         }
     }
 
@@ -73,9 +166,7 @@ public class VoronoiDebugger : MonoBehaviour
         {
             if (cell.vertices == null || cell.vertices.Count < 3) continue;
 
-            Gizmos.color = cellColor;
-
-            // Fill-ish polygon by drawing lines between consecutive vertices
+            // Draw cell boundaries
             for (int i = 0; i < cell.vertices.Count; i++)
             {
                 var a = new Vector3(cell.vertices[i].x, 0, cell.vertices[i].y);
@@ -94,5 +185,35 @@ public class VoronoiDebugger : MonoBehaviour
             UnityEditor.Handles.Label(new Vector3(cell.coordinate.x, 0, cell.coordinate.y), cell.id.ToString());
         }
 #endif
+    }
+
+    private List<Vector2> GetVoronoiBounds()
+    {
+        var field = typeof(Voronoi)
+            .GetField("points", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        var points = field?.GetValue(null) as List<Vector2>;
+        if (points == null || points.Count == 0) return new List<Vector2>();
+
+        // Create a bounding box around all points
+        var minX = points.Min(p => p.x);
+        var maxX = points.Max(p => p.x);
+        var minY = points.Min(p => p.y);
+        var maxY = points.Max(p => p.y);
+
+        // Add a small margin
+        var margin = Mathf.Max(maxX - minX, maxY - minY) * 0.1f;
+        minX -= margin;
+        maxX += margin;
+        minY -= margin;
+        maxY += margin;
+
+        return new List<Vector2>
+        {
+            new Vector2(minX, minY),
+            new Vector2(maxX, minY),
+            new Vector2(maxX, maxY),
+            new Vector2(minX, maxY)
+        };
     }
 }

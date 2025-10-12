@@ -15,8 +15,8 @@ public static class Voronoi
     private static List<Vector3> voronoiEdgePoints = new List<Vector3>();
     private static List<VoronoiCell> voronoiCells = new List<VoronoiCell>();
 
-    static Voronator v;
-    static Delaunator d;
+    public static Voronator v;
+    public static Delaunator d;
 
     public enum NodeType { land, ocean };
     public class VoronoiCell
@@ -50,19 +50,42 @@ public static class Voronoi
 
         ClearData();
 
+        List<Vector2> polygon = new List<Vector2>()
+{
+    new Vector2(500, 0),
+    new Vector2(1000, 250),
+    new Vector2(1000, 750),
+    new Vector2(500, 1000),
+    new Vector2(0, 750),
+    new Vector2(0, 250)
+};
+
+
+
+        polygon = EnsureClockwise(polygon);
         if (voronoiData.usePoissonDiscSampling)
         {
-            GeneratePoissonPoints(seed, width, height, poissonAttempts, poissonRadius);
+            GeneratePoissonPoints(seed, polygon, poissonAttempts, poissonRadius);
         }
         else
         {
-            GenerateRandomPoints(seed, width, height, pointCount);
+            GenerateRandomPoints(seed, polygon, pointCount);
         }
-        v = new Voronator(points, new Vector2(0, 0), new Vector2(width, height));
+
+
+
+
+
+        List<Vector2> filteredPoints = points
+     .Where(p => PointInPolygon(p, polygon))
+     .ToList();
+
+        v = new Voronator(filteredPoints, polygon);
+
         for (int i = 0; i < relaxations; i++)
         {
             points = v.GetClippedRelaxedPoints();
-            v = new Voronator(points, new Vector2(0, 0), new Vector2(width, height));
+            v = new Voronator(points, polygon);
         }
         d = v.Delaunator;
         StoreData();
@@ -79,6 +102,34 @@ public static class Voronoi
         }
         AddIsland(voronoiData);
         return voronoiCells;
+    }
+
+    private static bool PointInPolygon(Vector2 p, List<Vector2> poly)
+    {
+        bool inside = false;
+        for (int i = 0, j = poly.Count - 1; i < poly.Count; j = i++)
+        {
+            bool intersect = ((poly[i].y > p.y) != (poly[j].y > p.y)) &&
+                             (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x);
+            if (intersect)
+                inside = !inside;
+        }
+        return inside;
+    }
+    private static List<Vector2> EnsureClockwise(List<Vector2> poly)
+    {
+        float area = 0f;
+        for (int i = 0; i < poly.Count; i++)
+        {
+            Vector2 p1 = poly[i];
+            Vector2 p2 = poly[(i + 1) % poly.Count];
+            area += (p2.x - p1.x) * (p2.y + p1.y);
+        }
+        if (area > 0f)
+        {
+            poly.Reverse(); // Ensure clockwise
+        }
+        return poly;
     }
     public static void AddIsland(VoronoiData voronoiData)
     {
@@ -98,8 +149,6 @@ public static class Voronoi
     }
     private static void AddLargeIsland(System.Random prng, VoronoiData voronoiData)
     {
-        ;
-
 
         int startingCellIndex = prng.Next(voronoiCells.Count);
         double height = .9f;
@@ -221,23 +270,49 @@ public static class Voronoi
         StoreVoronoiEdgePoints();
     }
 
-    static void GenerateRandomPoints(int seed, float width, float height, int pointCount)
+    static void GenerateRandomPoints(int seed, List<Vector2> polygon, int pointCount)
     {
         System.Random prng = new System.Random(seed);
-        for (int i = 0; i < pointCount; i++)
+
+        // Compute polygon bounding box
+        float minX = polygon.Min(p => p.x);
+        float maxX = polygon.Max(p => p.x);
+        float minY = polygon.Min(p => p.y);
+        float maxY = polygon.Max(p => p.y);
+
+        int attempts = 0;
+        while (points.Count < pointCount && attempts < pointCount * 10)
         {
-            float x, y;
-            x = (float)prng.NextDouble() * width;
-            y = (float)prng.NextDouble() * height;
-            points.Add(new Vector2(x, y));
+            float x = (float)prng.NextDouble() * (maxX - minX) + minX;
+            float y = (float)prng.NextDouble() * (maxY - minY) + minY;
+            Vector2 candidate = new Vector2(x, y);
+
+            if (PointInPolygon(candidate, polygon))
+            {
+                points.Add(candidate);
+            }
+            attempts++;
         }
+
+        if (points.Count < pointCount)
+            Debug.LogWarning("Could not generate enough points inside the polygon with random sampling.");
     }
-    static void GeneratePoissonPoints(int seed, float width, float height, int poissonAttempts, float poissonRadius)
+
+    static void GeneratePoissonPoints(int seed, List<Vector2> polygon, int poissonAttempts, float poissonRadius)
     {
-        points = PoissonDiscSampling.GeneratePoints(poissonRadius, new Vector2(width, height), poissonAttempts, seed);
+
+
+        points = PoissonDiscSampling.GeneratePointsInPolygon(poissonRadius, polygon, poissonAttempts, seed);
     }
     static void StoreVoronoiVerticePoints()
     {
+        if (v == null)
+        {
+            Debug.LogError("Voronator instance is null!");
+            return;
+        }
+        if (voronoiEdgeVerticePoints == null) voronoiEdgeVerticePoints = new List<Vector3>();
+
         for (var i = 0; i < points.Count; i++)
         {
             var polygon = v.GetClippedPolygon(i);
@@ -245,12 +320,11 @@ public static class Voronoi
 
             foreach (var point in polygon)
             {
-
                 voronoiEdgeVerticePoints.Add(point);
-
             }
         }
     }
+
     static void StoreVoronoiEdgePoints()
     {
         for (var i = 0; i < points.Count; i++)
