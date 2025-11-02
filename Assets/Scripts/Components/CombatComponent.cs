@@ -1,89 +1,89 @@
-using System.Collections.Generic;
-using NUnit.Framework.Constraints;
-using UnityEngine;
-using UnityEngine.UIElements;
+// using System.Collections.Generic;
+// using NUnit.Framework.Constraints;
+// using UnityEngine;
+// using UnityEngine.UIElements;
 
 
-[RequireComponent(typeof(PropertyRegistryComponent))]
-[RequireComponent(typeof(TargetingComponent))]
-public class CombatComponent : MonoBehaviour
-{
-    private System.Random random = new System.Random();
+// [RequireComponent(typeof(PropertyRegistryComponent))]
+// [RequireComponent(typeof(TargetingComponent))]
+// public class CombatComponent : MonoBehaviour
+// {
+//     private System.Random random = new System.Random();
 
 
-    [SerializeField] private Property intellect;
-    // [SerializeField] private Property criticalChance;
-    // [SerializeField] private Property criticalPower;
+//     [SerializeField] private Property intellect;
+//     // [SerializeField] private Property criticalChance;
+//     // [SerializeField] private Property criticalPower;
 
-    // [SerializeField] private Property parryChance;
-    // [SerializeField] private Property parryPower;
+//     // [SerializeField] private Property parryChance;
+//     // [SerializeField] private Property parryPower;
 
-    // [SerializeField] private Property blockChance;
-    // [SerializeField] private Property blockPower;
+//     // [SerializeField] private Property blockChance;
+//     // [SerializeField] private Property blockPower;
 
-    // [SerializeField] private Property deflectChance;
-    // [SerializeField] private Property deflectPower;
+//     // [SerializeField] private Property deflectChance;
+//     // [SerializeField] private Property deflectPower;
 
-    // [SerializeField] private Property hitChance;
-    // [SerializeField] private Property hitPower;
-    PropertyRegistryComponent propertyRegistry;
-    TargetingComponent targetingComponent;
-
-
-    public Effect effect;
-
-    //[SerializeField] private ResourceType resource;
-    void Awake()
-    {
+//     // [SerializeField] private Property hitChance;
+//     // [SerializeField] private Property hitPower;
+//     PropertyRegistryComponent propertyRegistry;
+//     TargetingComponent targetingComponent;
 
 
+//     public Effect effect;
 
-        propertyRegistry = GetComponent<PropertyRegistryComponent>();
-        targetingComponent = GetComponent<TargetingComponent>();
+//     //[SerializeField] private ResourceType resource;
+//     void Awake()
+//     {
 
-        propertyRegistry.Register("Intellect", intellect);
-        // propertyRegistry.Register("criticalChance", criticalChance);
-        // propertyRegistry.Register("criticalPower", criticalPower);
 
-        // propertyRegistry.Register("parryChance", parryChance);
-        // propertyRegistry.Register("parryPower", parryPower);
 
-        // propertyRegistry.Register("blockChance", blockChance);
-        // propertyRegistry.Register("blockPower", blockPower);
+//         propertyRegistry = GetComponent<PropertyRegistryComponent>();
+//         targetingComponent = GetComponent<TargetingComponent>();
 
-        // propertyRegistry.Register("deflectChance", deflectChance);
-        // propertyRegistry.Register("deflectPower", deflectPower);
+//         propertyRegistry.Register("Intellect", intellect);
+//         // propertyRegistry.Register("criticalChance", criticalChance);
+//         // propertyRegistry.Register("criticalPower", criticalPower);
 
-        // propertyRegistry.Register("hitChance", hitChance);
-        // propertyRegistry.Register("hitPower", hitPower);
-    }
-    float nextDamageTime = 0f;
+//         // propertyRegistry.Register("parryChance", parryChance);
+//         // propertyRegistry.Register("parryPower", parryPower);
 
-    void Update()
-    {
-        if (targetingComponent.HasTarget() && Time.time >= nextDamageTime)
-        {
+//         // propertyRegistry.Register("blockChance", blockChance);
+//         // propertyRegistry.Register("blockPower", blockPower);
 
-            GameObject target = targetingComponent.GetTarget();
+//         // propertyRegistry.Register("deflectChance", deflectChance);
+//         // propertyRegistry.Register("deflectPower", deflectPower);
 
-            DoDamage(target);
+//         // propertyRegistry.Register("hitChance", hitChance);
+//         // propertyRegistry.Register("hitPower", hitPower);
+//     }
+//     float nextDamageTime = 0f;
 
-            nextDamageTime = Time.time + 10f; // 2 second delay
-        }
-    }
+//     void Update()
+//     {
+//         if (targetingComponent.HasTarget() && Time.time >= nextDamageTime)
+//         {
 
-    public void DoDamage(GameObject target)
-    {
-        EffectContext ec = new EffectContext(gameObject, this.GetComponent<PropertyRegistryComponent>().SnapshotAll(), target, null);
+//             GameObject target = targetingComponent.GetTarget();
 
-        effect.Apply(ec);
-    }
+//             DoDamage(target);
 
-    // private bool DidCrit()
-    // {
-    //     float amount = (float)random.NextDouble();
+//             nextDamageTime = Time.time + 10f; // 2 second delay
+//         }
+//     }
 
-    //     bool critted = amount < criticalChance.Value;
-    //     return critted;
-    // }
-}
+//     public void DoDamage(GameObject target)
+//     {
+//         EffectContext ec = new EffectContext(gameObject, this.GetComponent<PropertyRegistryComponent>().SnapshotAll(), target, null);
+
+//         effect.Apply(ec);
+//     }
+
+//     // private bool DidCrit()
+//     // {
+//     //     float amount = (float)random.NextDouble();
+
+//     //     bool critted = amount < criticalChance.Value;
+//     //     return critted;
+//     // }
+// }
