@@ -5,11 +5,12 @@ public struct GameResult
     public string Message { get; private set; }
 
     // Success factory
-    public static GameResult Ok() => new GameResult { Success = true, Error = GameErrorCode.None, Message = null };
+    public static GameResult Ok() => new() { Success = true, Error = GameErrorCode.None, Message = null };
 
     // Failure factory
     public static GameResult Fail(GameErrorCode error, string message = null) =>
-        new GameResult { Success = false, Error = error, Message = message ?? error.ToString() };
+        new()
+        { Success = false, Error = error, Message = message ?? error.ToString() };
 
     // Implicit conversion to bool for convenience
     public static implicit operator bool(GameResult result) => result.Success;

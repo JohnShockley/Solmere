@@ -1,6 +1,32 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+#region StatType
+public enum StatType
+{
+    Strength,
+    Agility,
+    Intelligence,
+    Stamina,
 
+    MovementSpeed,
+    RotationSpeed,
+
+    HealthMin,
+    HealthMax,
+    HealthRegen,
+
+    MomentumMin,
+    MomentumMax,
+    MomentumRegen,
+
+    FlowMin,
+    FlowMax,
+    FlowRegen,
+
+
+}
+#endregion
 public class StatManager
 {
     private readonly Dictionary<StatType, Stat> stats = new();
@@ -8,19 +34,66 @@ public class StatManager
     private readonly Dictionary<StatType, List<StatType>> dependencyMap = new(); // Tracks dependent stats
     private readonly EntityComponent entityComponent;
 
-    public event Action<Stat> OnStatChanged;
+    public event Action<StatType, float> OnStatChanged;
+    private readonly Dictionary<StatType, Action<float>> perStatTrueListeners = new();
+    private readonly Dictionary<StatType, Action<float>> perStatRoundedListeners = new();
+    private readonly Dictionary<StatType, Action<int>> perStatIntListeners = new();
 
-    public StatManager(EntityComponent entityComponent)
+    #region Initialization
+    public StatManager(EntityComponent entityComponent, DefaultStats defaultValueProvider)
     {
         this.entityComponent = entityComponent;
+        InitializeStats(defaultValueProvider);
     }
 
-    public void AddStat(Stat stat)
+    private void InitializeStats(DefaultStats defaults)
     {
-        if (!stats.ContainsKey(stat.Type))
-            stats[stat.Type] = stat;
+        foreach (StatType type in Enum.GetValues(typeof(StatType)))
+            stats[type] = new Stat(type, defaults.GetValue(type));
     }
 
+    #endregion
+    #region Subscription
+    public void SubscribeTrue(StatType type, Action<float> callback)
+    {
+        if (!perStatTrueListeners.ContainsKey(type))
+            perStatTrueListeners[type] = null;
+        perStatTrueListeners[type] += callback;
+    }
+
+    public void SubscribeRounded(StatType type, Action<float> callback)
+    {
+        if (!perStatRoundedListeners.ContainsKey(type))
+            perStatRoundedListeners[type] = null;
+        perStatRoundedListeners[type] += callback;
+    }
+
+    public void SubscribeInt(StatType type, Action<int> callback)
+    {
+        if (!perStatIntListeners.ContainsKey(type))
+            perStatIntListeners[type] = null;
+        perStatIntListeners[type] += callback;
+    }
+
+    public void UnsubscribeTrue(StatType type, Action<float> callback)
+    {
+        if (perStatTrueListeners.ContainsKey(type))
+            perStatTrueListeners[type] -= callback;
+    }
+    public void UnsubscribeRounded(StatType type, Action<float> callback)
+    {
+        if (perStatRoundedListeners.ContainsKey(type))
+            perStatRoundedListeners[type] -= callback;
+    }
+        public void UnsubscribeInt(StatType type, Action<int> callback)
+    {
+        if (perStatIntListeners.ContainsKey(type))
+            perStatIntListeners[type] -= callback;
+    }
+
+
+    #endregion
+    #region Snapshot
     public Dictionary<StatType, float> Snapshot()
     {
         var snapshot = new Dictionary<StatType, float>();
@@ -32,7 +105,7 @@ public class StatManager
         }
         return snapshot;
     }
-
+    #endregion
     #region Modifiers
     public void AddModifier(StatModifier modifier)
     {
@@ -123,30 +196,25 @@ public class StatManager
         foreach (var key in toRemove)
             dependencyMap.Remove(key);
     }
-
-private void MarkDirty(StatType type)
-{
-    if (!stats.TryGetValue(type, out var stat))
-        return;
-
-    stat.IsDirty = true;
-
-    // First recalc the stat itself
-    Recalculate(stat);
-
-    // Then propagate to dependents
-    if (dependencyMap.TryGetValue(type, out var dependents))
-    {
-        foreach (var dep in dependents)
-            MarkDirty(dep); // recursively recalc dependent stats
-    }
-}
-
-
-
     #endregion
-
     #region Recalculation
+    private void MarkDirty(StatType type)
+    {
+        Stat stat = stats[type];
+
+        stat.IsDirty = true;
+
+        // First recalc the stat itself
+        Recalculate(stat);
+
+        // Then propagate to dependents
+        if (dependencyMap.TryGetValue(type, out var dependents))
+        {
+            foreach (var dep in dependents)
+                MarkDirty(dep); // recursively recalc dependent stats
+        }
+    }
+
     private static readonly StatModifierType[] CalculationOrder =
     {
         StatModifierType.Additive,
@@ -209,35 +277,74 @@ private void MarkDirty(StatType type)
         stat.CurrentValue = (float)Math.Round(result);
         stat.IsDirty = false;
 
-        OnStatChanged?.Invoke(stat);
+        OnStatChanged?.Invoke(stat.Type, stat.CurrentValue);
+        if (perStatTrueListeners.TryGetValue(stat.Type, out var trueListeners))
+        {
+            trueListeners?.Invoke(stat.CurrentValue);
+        }
+        if (perStatRoundedListeners.TryGetValue(stat.Type, out var roundedListeners))
+        {
+            roundedListeners?.Invoke(stat.RoundedFloatValue);
+        }
+        if (perStatIntListeners.TryGetValue(stat.Type, out var intListeners))
+        {
+            intListeners?.Invoke(stat.IntValue);
+        }
     }
 
-   public float GetValue(StatType type)
-{
-    return stats.TryGetValue(type, out var stat) ? stat.CurrentValue : 0f;
-}
+    public float GetValue(StatType type)
+    {
+        return stats[type].CurrentValue;
+    }
 
     #endregion
 
-    #region Base Value Management
-public void SetBaseValue(StatType type, float value)
-{
-    if (stats.TryGetValue(type, out var stat))
+    #region BaseValue
+    public void SetBaseValue(StatType type, float value)
     {
-        stat.SetBaseValue(value);
+        stats[type].BaseValue = value;
         MarkDirty(type); // propagate recalculation and fire OnStatChanged
     }
-}
 
-public void ChangeBaseValue(StatType type, float delta)
-{
-    if (stats.TryGetValue(type, out var stat))
+    public void ChangeBaseValue(StatType type, float delta)
     {
-        stat.SetBaseValue(stat.BaseValue + delta);
-        MarkDirty(type); // propagate recalculation and fire OnStatChanged
+        if (delta == 0)
+        {
+            return;
+        }
+        SetBaseValue(type, stats[type].BaseValue + delta);
     }
-}
+    #endregion
+    #region Stat
+    private class Stat
+    {
+        public StatType Type { get; private set; }
+        public float BaseValue { get; set; }
 
+        private float _currentValue;
+        public float CurrentValue
+        {
+            get => _currentValue;
+            set
+            {
+                _currentValue = value;
+                IntValue = Mathf.RoundToInt(value);
+                RoundedFloatValue = (float)Math.Round(value, 2, MidpointRounding.AwayFromZero);
+            }
+        }
+
+        public float RoundedFloatValue { get; private set; }
+        public int IntValue { get; private set; }
+        public bool IsDirty { get; set; } = true;
+
+        public Stat(StatType type, float baseValue)
+        {
+            Type = type;
+            BaseValue = baseValue;
+            CurrentValue = baseValue; // automatically sets IntValue & RoundedFloatValue
+        }
+    }
 
     #endregion
+
 }

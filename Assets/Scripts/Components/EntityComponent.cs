@@ -4,32 +4,35 @@ public class EntityComponent : MonoBehaviour
 {
     public StatManager statManager;
     public ResourceManager resourceManager;
+    public DefaultStats defaultStats;
+    public DefaultResources defaultResources;
 
     // For demo purposes
     private StatModifier testModifier;
+    private RegenModifier regenModifier;
 
     public EntityComponent()
     {
-        statManager = new StatManager(this);
-        resourceManager = new ResourceManager(this);
+
+
     }
 
-    private void Start()
+    private void Awake()
     {
-        // Initialize stats
-        statManager.AddStat(new Stat(StatType.Strength, 10));
-        statManager.AddStat(new Stat(StatType.MaxHealth, 100));
-        statManager.AddStat(new Stat(StatType.HealthRegen, 5));
 
+        statManager = new StatManager(this, defaultStats);
+        resourceManager = new ResourceManager(this, defaultResources);
         // Add listener for stat changes
-        statManager.OnStatChanged += stat =>
+        statManager.OnStatChanged += (type, value) =>
         {
-            Debug.Log($"Stat {stat.Type} updated: {stat.CurrentValue}");
+            Debug.Log($"Generic listener: Stat {type} updated: {value}");
         };
+
     }
 
     private void Update()
     {
+        resourceManager.Tick(Time.deltaTime);
         // Press Space to add a Strength→MaxHealth dependency modifier
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -39,24 +42,43 @@ public class EntityComponent : MonoBehaviour
 
             // Create a new dependency modifier
             testModifier = new StatDependencyModifier(
-                StatType.MaxHealth,    // Target
+                StatType.HealthMax,    // Target
                 StatType.Strength,     // Source
                 22f                    // Factor: each Strength adds 22 MaxHealth
             );
 
             statManager.AddModifier(testModifier);
+        }
 
-            // Force recalculation
-            float maxHealth = statManager.GetValue(StatType.MaxHealth);
-            Debug.Log($"Applied modifier: MaxHealth = {maxHealth}");
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+
+            // Create a new dependency modifier
+            regenModifier = new RegenModifier(
+               80,
+                -8f
+            );
+
+            resourceManager.AddRegenModifier(ResourceType.Health, regenModifier);
+            Debug.Log("Added negative regen modifier");
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+        
+            // Create a new dependency modifier
+            regenModifier = new RegenModifier(
+               80,
+                8f
+            );
+
+            resourceManager.AddRegenModifier(ResourceType.Health, regenModifier);
+            Debug.Log("Added positive regen modifier");
         }
 
         // Optional: Press H to increase Strength base
         if (Input.GetKeyDown(KeyCode.H))
         {
             statManager.ChangeBaseValue(StatType.Strength, 1);
-            Debug.Log($"Increased Strength: {statManager.GetValue(StatType.Strength)}");
-
         }
     }
 }

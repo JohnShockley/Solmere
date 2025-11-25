@@ -3,21 +3,16 @@
 // using UnityEngine.InputSystem;
 // using UnityEngine.UIElements;
 
-
-// [RequireComponent(typeof(PropertyRegistryComponent))]
 // public class MoveComponent : MonoBehaviour
 // {
 //     private Vector3 moveDirection;
 //     private CharacterController controller;
 
-//     public Property speed;
-//     public Property rotationSpeed;
-//     public Property gravityMultiplier;
-//     public Property jumpPower;
+//     public StatType speed;
+//     public StatType rotationSpeed;
 //     private float gravity = -9.81f;
 //     private float downwardVelocity;
 
-//     private PropertyRegistryComponent propertyRegistry;
 //     void Awake()
 //     {
 //         controller = GetComponent<CharacterController>();
@@ -25,8 +20,6 @@
 //         propertyRegistry = GetComponent<PropertyRegistryComponent>();
 //         propertyRegistry.Register("speed", speed);
 //         propertyRegistry.Register("rotationSpeed", rotationSpeed);
-//         propertyRegistry.Register("gravityMultiplier", gravityMultiplier);
-//         propertyRegistry.Register("jumpPower", jumpPower);
 //     }
 
 //     // Call this method each frame to apply movement

@@ -1,75 +1,36 @@
-// using System.Collections.Generic;
-// using UnityEngine;
-// using UnityEngine.UIElements;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+[RequireComponent(typeof(EntityComponent))]
+public class HealthComponent : MonoBehaviour
+{
+    private StatType healthRegen = StatType.HealthRegen;
+    private StatType healthMin = StatType.HealthMin;
+    private StatType healthMax = StatType.HealthMax;
+    private ResourceType healthResource = ResourceType.Health;
+    private EntityComponent entityComponent;
 
 
-// [RequireComponent(typeof(PropertyRegistryComponent))]
-// public class HealthComponent : MonoBehaviour
-// {
-//     private System.Random random = new System.Random();
-//     [SerializeField] private Resource health;
-//     [SerializeField] private Property healthRegen;
+    void Start()
+    {
+        entityComponent = GetComponent<EntityComponent>();
+        entityComponent.resourceManager.SubscribeInt(healthResource, (value) =>
+        {
+            Debug.Log($"{healthResource} changed to: {value}");
+        });
+    }
 
-//     [SerializeField] private Property dodgeChance;
-//     [SerializeField] private Property dodgePower;
+    public void ReceiveDamage(float damage)
+    {
+        entityComponent.resourceManager.SpendUpTo(healthResource, 0, damage);
+        //maybe check health? But before we 'take' the damage, need to call OnDamageTaken events
 
-//     [SerializeField] private Resource armor;
-
-//     private PropertyRegistryComponent propertyRegistry;
-
-//     void Awake()
-//     {
-
-
-//         propertyRegistry = GetComponent<PropertyRegistryComponent>();
-
-//         propertyRegistry.Register("maxHealth", health.GetMax());
-//         propertyRegistry.Register("minHealth", health.GetMin());
-//         propertyRegistry.Register("healthRegen", healthRegen);
-
-//         propertyRegistry.Register("dodgeChance", dodgeChance);
-//         propertyRegistry.Register("dodgePower", dodgePower);
-
-//         propertyRegistry.Register("maxArmor", armor.GetMax());
-//         propertyRegistry.Register("minArmor", armor.GetMin());
-//     }
-//     void Update()
-//     {
-//         health.Add(healthRegen.Value * Time.deltaTime);
-
-//         if (Input.GetKeyDown(KeyCode.E))
-//         {
-//             // Get the maxHealth property from the registry
-//             Property maxHealth = propertyRegistry.Get("maxHealth");
+    }
 
 
-//             // Add a modifier to maxHealth when 'E' is pressed
-//             // Example: Adding 10% extra health
-//             PropertyModifier healthModifier = new PropertyModifier(10, PropertyModType.Flat);
-
-//             maxHealth.AddModifier(healthModifier);
-//             Debug.Log("Max Health increased by 10");
-
-//         }
-//     }
-
-//     public bool ReceiveDamage(float damage)
-//     {
-//         health.Add(-damage);
-//         return CheckDeath();
-//     }
-
-//     private bool CheckDeath()
-//     {
-//         bool didDie = health.GetCurrent() == 0;
-//         if (didDie)
-//         {
-//             OnDeath();
-//         }
-//         return didDie;
-//     }
-//     private void OnDeath()
-//     {
-//         Debug.Log($"{health} depleted!");
-//     }
-// }
+    private void OnDeath()
+    {
+        //call a chain of OnDeath events
+    }
+}
