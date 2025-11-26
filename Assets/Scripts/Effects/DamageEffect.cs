@@ -1,86 +1,35 @@
-// using System.Collections.Generic;
-// using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 
-// [CreateAssetMenu(menuName = "Effects/Damage")]
-// public class DamageEffect : Effect
-// {
-//     public DamageType damageType;
-//     public AttackType attackType;
-//     public bool flags;
-//     public float BaseDamage;
-//     public List<string> ModifyingProperties;
-//     public List<float> PropertyModifiers;
-//     public float overallModifier;
+[CreateAssetMenu(menuName = "Effects/Damage")]
+public class DamageEffect : Effect
+{
+    public float Amount;
+    public StatType Stat;
 
-//     private float damage;
-//     private List<Behavior> modifyingBehaviors;
+    public DamageEffect(float amount, StatType stat)
+    {
+        Amount = amount;
+        Stat = stat;
+    }
 
-//     public override void Apply(EffectContext context)
-//     {
-//         if (context.Target == null)
-//         {
-//             return;
-//         }
+    public override void Execute(EffectContext context)
+    {
+        if (context.Target.TryGetComponent<HealthComponent>(out var health))
+        {
+            float damage = context.StatSnapshot[Stat] + Amount;
+            health.ReceiveDamage(damage);
+            Debug.Log($"Dealt {damage} {Stat} damage to {context.Target.name}");
+        }
 
-//         if (context.Target.TryGetComponent<EffectReceiverComponent>(out var targetEffectReceiver))
-//         {
-//             damage = BaseDamage;
+        foreach (Effect child in Children)
+        {
+            var childContext = context;
+            child.Execute(childContext);
+        }
+    }
 
-//             for (int i = 0; i < ModifyingProperties.Count; i++)
-//             {
-//                 damage += context.StatSnapshot.Get(ModifyingProperties[i]) * PropertyModifiers[i];
-//             }
+ 
 
-//             // foreach (Behavior b in modifyingBehaviors) {
-//             //     damage *= b;
-//             // }
+}
 
-//             targetEffectReceiver.ReceiveDamageEffect(this);
-//         }
-//     }
-
-//     public float getDamage()
-//     {
-//         return damage;
-//     }
-
-// }
-
-// public enum DamageType
-// {
-//     Physical,
-//     Magical,
-//     True // Ignores all mitigation
-// }
-
-// public enum AttackType
-// {
-//     Melee,
-//     Projectile,
-//     AOE,
-// }
-
-// [SerializeField]
-// public enum AttackOutcome
-// {
-//     Pending,        // Not resolved yet
-//     Missed,         // Attacker failed AccuracyRoll
-//     Dodged,         // Defender Succeeded DodgeRoll
-
-//     Parried,        // Defender Succeeded ParryRoll
-//     Blocked,        // Defender Succeeded BlockRoll (Physical)
-//     Deflected,      // Defender Succeeded BlockRoll (Magical)
-
-//     Riposted,       // Defender Critically Succeeded ParryRoll (Physical Melee)
-//     Reflected,      // Defender Critically Succeeded BlockRoll (Magical)
-
-//     Breakthrough,   // Defender Failed ParryRoll
-//     Staggered,      // Defender Failed BlockRoll (Physical)
-
-//     Absorbed,       // Defender Absorbed Attack
-
-//     Resisted,       // Defender Armor Succeeded Resist
-//     Pierced,        // Defender Armor Failed Resist
-//     Hit,            // Normal damage applied
-//     Fatal           // Killed target
-// }

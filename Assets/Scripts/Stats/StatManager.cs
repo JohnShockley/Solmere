@@ -86,7 +86,7 @@ public class StatManager
         if (perStatRoundedListeners.ContainsKey(type))
             perStatRoundedListeners[type] -= callback;
     }
-        public void UnsubscribeInt(StatType type, Action<int> callback)
+    public void UnsubscribeInt(StatType type, Action<int> callback)
     {
         if (perStatIntListeners.ContainsKey(type))
             perStatIntListeners[type] -= callback;
@@ -101,8 +101,7 @@ public class StatManager
         foreach (var kvp in stats)
         {
             var stat = kvp.Value;
-            if (!stat.IsDirty)
-                snapshot[kvp.Key] = stat.CurrentValue;
+            snapshot[kvp.Key] = stat.CurrentValue;
         }
         return snapshot;
     }

@@ -33,5 +33,12 @@ public class EntityComponent : MonoBehaviour
     private void Update()
     {
         resourceManager.Tick(Time.deltaTime);
+
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            DamageEffect damageEffect = EffectFactory.CreateDamageEffect(10f, StatType.Strength);
+            EffectContext context = new(gameObject, statManager.Snapshot(), gameObject);
+            damageEffect.Execute(context);
+        }
     }
 }
