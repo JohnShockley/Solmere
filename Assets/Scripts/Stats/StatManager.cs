@@ -11,6 +11,7 @@ public enum StatType
 
     MovementSpeed,
     RotationSpeed,
+    JumpPower,
 
     HealthMin,
     HealthMax,
