@@ -1,77 +1,73 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
-[RequireComponent(typeof(EntityComponent))]
 
+[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(EntityComponent))]
 public class MoveComponent : MonoBehaviour
 {
-    private Vector3 moveDirection;
-    private CharacterController controller;
+    [Header("Movement Settings")]
+    private float _moveSpeed = 0f;
+    private readonly StatType movementSpeed = StatType.MovementSpeed;
+    private float _rotationSpeed = 0f;
+    private readonly StatType rotationSpeed = StatType.RotationSpeed;
+    public float gravity = -9.81f;
 
-    public StatType speed;
-    public StatType rotationSpeed;
-    private float gravity = -9.81f;
-    private float gravityMultiplier = 1f;
-    private float downwardVelocity;
+    private CharacterController controller;
+    private Vector3 moveDirection;
+
+    private float verticalVelocity;
     private EntityComponent entityComponent;
 
 
-    void Start()
+    private void Awake()
     {
         entityComponent = GetComponent<EntityComponent>();
-
         controller = GetComponent<CharacterController>();
     }
-
-    // Call this method each frame to apply movement
-    public void Apply(Vector2 input)
+    private void Start()
     {
-        moveDirection = new Vector3(input.x, 0f, input.y);
+        _moveSpeed = entityComponent.statManager.GetValue(movementSpeed);
+        entityComponent.statManager.SubscribeTrue(movementSpeed, (value) =>
+        {
+            _moveSpeed = value;
+        });
+        _rotationSpeed = entityComponent.statManager.GetValue(rotationSpeed);
+        entityComponent.statManager.SubscribeTrue(rotationSpeed, (value) =>
+        {
+            _rotationSpeed = value;
+        });
+
+    }
+
+    private void Update()
+    {
         ApplyGravity();
-        ApplyRotation(input);
-        ApplyMovement(input);
+        ApplyMovement();
+    }
+    public void SetMoveDirection(Vector3 worldDir)
+    {
+        moveDirection = worldDir;
     }
 
-    public void ApplyRotation(Vector2 input)
+    private void ApplyGravity()
     {
-        var rotationSpeed = entityComponent.statManager.GetValue(StatType.RotationSpeed);
-        if (input.sqrMagnitude == 0)
-        {
-            return;
-        }
-        Quaternion targetRotation = Quaternion.LookRotation(new Vector3(input.x, 0f, input.y));
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed);
-    }
-
-    public void ApplyMovement(Vector2 input)
-    {
-         var speed = entityComponent.statManager.GetValue(StatType.MovementSpeed);
-        controller.Move(speed * Time.deltaTime * moveDirection);
-    }
-
-    public void ApplyGravity()
-    {
-        if (IsGrounded() && downwardVelocity < 0.0f)
-        {
-            downwardVelocity = -1f;
-        }
+        if (controller.isGrounded && verticalVelocity < 0)
+            verticalVelocity = -1f;
         else
-        {
-            downwardVelocity += gravity * gravityMultiplier * Time.deltaTime;
-        }
-        moveDirection.y = downwardVelocity;
+            verticalVelocity += gravity * Time.deltaTime;
     }
 
-    public void Jump()
+    private void ApplyMovement()
     {
-        var jumpPower = entityComponent.statManager.GetValue(StatType.JumpPower);
-        if (!IsGrounded())
-        {
-            return;
-        }
-        downwardVelocity += jumpPower;
-    }
+        Vector3 horizontalVelocity = moveDirection * _moveSpeed;
+        horizontalVelocity.y = verticalVelocity;
 
-    private bool IsGrounded() => controller.isGrounded;
+        controller.Move(horizontalVelocity * Time.deltaTime);
+
+        // Rotate toward movement direction
+        if (moveDirection.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, _rotationSpeed * Time.deltaTime);
+        }
+    }
 }

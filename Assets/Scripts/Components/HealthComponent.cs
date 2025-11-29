@@ -10,11 +10,14 @@ public class HealthComponent : MonoBehaviour
     private StatType healthMax = StatType.HealthMax;
     private ResourceType healthResource = ResourceType.Health;
     private EntityComponent entityComponent;
+    void Awake()
+    {
+                entityComponent = GetComponent<EntityComponent>();
 
+    }
 
     void Start()
     {
-        entityComponent = GetComponent<EntityComponent>();
         entityComponent.resourceManager.SubscribeInt(healthResource, (value) =>
         {
             Debug.Log($"{healthResource} changed to: {value}");
