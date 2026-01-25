@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48c4d76bb2e55684587b5f59038a232a, type: 3}
+  m_Name: AutoAttackAbility
+  m_EditorClassIdentifier: 
+  Name: Auto Attack
+  Description: Attacks the target.
+  AbilityType: 0
+  AbilityTargetType: 0
+  Cooldown: 1
+  StartingEffect: {fileID: 11400000, guid: 75dce2188cfc15046b657c2114113af6, type: 2}

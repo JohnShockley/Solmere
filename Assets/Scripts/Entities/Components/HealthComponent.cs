@@ -9,17 +9,17 @@ public class HealthComponent : MonoBehaviour
     private StatType healthMax = StatType.HealthMax;
     private float _healthResource;
     private ResourceType healthResource = ResourceType.Health;
-    private EntityComponent entityComponent;
+    private EntityComponent entity;
     void Awake()
     {
-        entityComponent = GetComponent<EntityComponent>();
+        entity = GetComponent<EntityComponent>();
 
     }
 
     void Start()
     {
-        _healthResource = entityComponent.resourceManager.GetValue(healthResource);
-        entityComponent.resourceManager.SubscribeInt(healthResource, (value) =>
+        _healthResource = entity.resourceManager.GetValue(healthResource);
+        entity.resourceManager.SubscribeInt(healthResource, (value) =>
         {
             _healthResource = value;
         });
@@ -30,16 +30,16 @@ public class HealthComponent : MonoBehaviour
         var e = new DamageEvent(amount, damageContext.Source, gameObject);
 
         // PHASE 1 — Pre-damage (can cancel)
-        entityComponent.Events.RaisePreDamageMitigation(e);
+        entity.Events.RaisePreDamageMitigation(e);
         if (e.Cancelled) return;
 
         // PHASE 2 — Modify damage (armor, resistances, modifiers)
-        entityComponent.Events.RaiseDamageMitigation(e);
+        entity.Events.RaiseDamageMitigation(e);
 
         // PHASE 3 — Apply damage & notify
         ApplyDamage(amount);
-        entityComponent.Events.RaisePostDamageMitigation(e);
-        entityComponent.Events.RaiseDamageTaken(e);
+        entity.Events.RaisePostDamageMitigation(e);
+        entity.Events.RaiseDamageTaken(e);
     }
 
     public void ReceiveHeal(EffectContext healingContext)
@@ -49,12 +49,12 @@ public class HealthComponent : MonoBehaviour
 
     private void ApplyDamage(float damage)
     {
-        entityComponent.resourceManager.ChangeCurrentValue(healthResource, -damage);
+        entity.resourceManager.ChangeCurrentValue(healthResource, -damage);
 
 
 
         if (_healthResource <= 0)
-            entityComponent.Events.RaiseDeath();
+            entity.Events.RaiseDeath();
     }
     private void ApplyHealth()
     {

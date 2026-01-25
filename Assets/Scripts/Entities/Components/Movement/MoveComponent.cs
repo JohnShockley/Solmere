@@ -15,23 +15,23 @@ public class MoveComponent : MonoBehaviour
     private Vector3 moveDirection;
 
     private float verticalVelocity;
-    private EntityComponent entityComponent;
+    private EntityComponent entity;
 
 
     private void Awake()
     {
-        entityComponent = GetComponent<EntityComponent>();
+        entity = GetComponent<EntityComponent>();
         controller = GetComponent<CharacterController>();
     }
     private void Start()
     {
-        _moveSpeed = entityComponent.statManager.GetValue(movementSpeed);
-        entityComponent.statManager.SubscribeTrue(movementSpeed, (value) =>
+        _moveSpeed = entity.statManager.GetValue(movementSpeed);
+        entity.statManager.SubscribeTrue(movementSpeed, (value) =>
         {
             _moveSpeed = value;
         });
-        _rotationSpeed = entityComponent.statManager.GetValue(rotationSpeed);
-        entityComponent.statManager.SubscribeTrue(rotationSpeed, (value) =>
+        _rotationSpeed = entity.statManager.GetValue(rotationSpeed);
+        entity.statManager.SubscribeTrue(rotationSpeed, (value) =>
         {
             _rotationSpeed = value;
         });

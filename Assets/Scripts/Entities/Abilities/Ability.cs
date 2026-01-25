@@ -1,47 +1,27 @@
 using UnityEngine;
-
-public abstract class Ability : ScriptableObject
+[CreateAssetMenu(menuName = "Ability")]
+public class Ability : ScriptableObject
 {
     public string Name = "Unnamed Spell";
     public string Description = "Empty Spell Description.";
 
-    public AbilityType abilityType;
-    public AbilityTargetType abilityTargetType;
+    public AbilityType AbilityType;
+    public AbilityTargetType AbilityTargetType;
     [Min(0)]
-    public float cooldown;
-    public Effect startingEffect;
-    private EffectContext effectContext;
-    private float lastCastTime;
+    public float Cooldown;
+    public Effect StartingEffect;
 
-    public bool CanCast()
+
+    public void Cast(AbilityContext abilityContext)
     {
-        return Time.time >= lastCastTime + cooldown;
-    }
-
-    public void Cast()
-    {
-        effectContext = new();
-        effectContext.Source = null; //TODO: set source to caster
-
-        lastCastTime = Time.time;
-        // EffectContext ec = new EffectContext(gameObject, this.GetComponent<PropertyRegistryComponent>().SnapshotAll(), target, null); 
-
-        if (abilityTargetType == AbilityTargetType.Targeted)
+        if (!abilityContext.CanCast())
         {
-            
+            return; //eventually return appropriate error code
         }
-        if (abilityTargetType == AbilityTargetType.Point)
-        {
-            //NYI
-        }
-
-
-        startingEffect.Execute(effectContext);
+        Debug.Log($"Casting ability: {Name}");
+        abilityContext.MarkCast();
+        StartingEffect.Execute(abilityContext.EffectContext);
     }
-
-
-
-
 
 }
 

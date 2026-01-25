@@ -12,7 +12,7 @@ public class EntityComponent : MonoBehaviour
     private RegenModifier regenModifier;
     public EventBus Events { get; private set; }
 
-    public GameObject Target { get; set; }
+    public GameObject CurrentTarget { get; set; }
 
     public EntityComponent()
     {
