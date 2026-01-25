@@ -27,4 +27,4 @@ MonoBehaviour:
   offset: {x: 2.38, y: 0}
   stepSize: 0.001
   verticalOffset: 0
-  power: 1
+  power: 0.02

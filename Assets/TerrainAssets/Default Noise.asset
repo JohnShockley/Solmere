@@ -23,7 +23,7 @@ MonoBehaviour:
   persistence: 0.53
   lacunarity: 2.3
   muteness: 0.165
-  seed: 23
+  seed: 0
   offset: {x: 0, y: 0}
   stepSize: 0.181
   verticalOffset: 0
