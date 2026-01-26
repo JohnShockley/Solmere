@@ -16,6 +16,12 @@ public class Ability : ScriptableObject
     {
         if (!abilityContext.CanCast())
         {
+            Debug.Log($"Ability {Name} is on cooldown.");
+            return; //eventually return appropriate error code
+        }
+        if (AbilityTargetType == AbilityTargetType.Targeted && abilityContext.EffectContext.Target == null)
+        {
+            Debug.Log($"Ability {Name} requires a target.");
             return; //eventually return appropriate error code
         }
         Debug.Log($"Casting ability: {Name}");
