@@ -166,6 +166,22 @@ public class VoronoiDebugger : MonoBehaviour
         {
             if (cell.vertices == null || cell.vertices.Count < 3) continue;
 
+
+
+            Color drawColor = cellColor;
+            if (cell.ControllingFactionId != -1)
+            {
+                var worldManager = FindFirstObjectByType<WorldManager>();
+                if (worldManager != null)
+                {
+                    var faction = worldManager.GetFactionById(cell.ControllingFactionId);
+                    if (faction != null)
+                    {
+                        drawColor = faction.Color;
+                    }
+                }
+            }
+            Gizmos.color = drawColor;
             // Draw cell boundaries
             for (int i = 0; i < cell.vertices.Count; i++)
             {

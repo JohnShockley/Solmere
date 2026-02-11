@@ -28,8 +28,7 @@ public static class Voronoi
         public NodeType nodeType;
         public double height;
         public bool used;
-
-
+        public int ControllingFactionId = -1;
     }
     [System.Serializable]
     public struct IslandData
@@ -40,7 +39,7 @@ public static class Voronoi
         public double sharpness;
     }
 
-    public static List<VoronoiCell> CreateVoronoi(VoronoiData voronoiData, int width, int height)
+    public static List<VoronoiCell> CreateVoronoi(VoronoiData voronoiData,  List<Vector2> polygon)
     {
         int seed = voronoiData.seed;
         int relaxations = voronoiData.relaxations;
@@ -49,18 +48,6 @@ public static class Voronoi
         float poissonRadius = voronoiData.poissonRadius;
 
         ClearData();
-
-        List<Vector2> polygon = new List<Vector2>()
-{
-    new Vector2(500, 0),
-    new Vector2(1000, 250),
-    new Vector2(1000, 750),
-    new Vector2(500, 1000),
-    new Vector2(0, 750),
-    new Vector2(0, 250)
-};
-
-
 
         polygon = EnsureClockwise(polygon);
         if (voronoiData.usePoissonDiscSampling)
