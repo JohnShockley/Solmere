@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using static Voronoi;
+using static InfluenceManager;
 using System.Linq;
 
 public class WorldManager : MonoBehaviour
@@ -14,24 +15,13 @@ public class WorldManager : MonoBehaviour
     [SerializeField] private float testClaimInterval = 2f;
     private float testTimer;
 
-    void Update()
-    {
-        testTimer += Time.deltaTime;
-
-        if (testTimer >= testClaimInterval)
-        {
-            testTimer = 0f;
-
-            int randomCell = UnityEngine.Random.Range(0, WorldCells.Count);
-            int randomFaction = UnityEngine.Random.Range(0, factions.Count);
-
-            ClaimCell(randomCell, factions[randomFaction].Id);
-        }
-    }
+   
 
     void Start()
     {
         GenerateWorld();
+        
+
 
     }
     void GenerateWorld()
@@ -49,8 +39,9 @@ public class WorldManager : MonoBehaviour
         WorldCells = CreateVoronoi(data, square);
 
         CreateFactions();
+        InfluenceManager.Initialize(WorldCells, factions);
         AssignStartingCells();
-
+        
     }
 
     void CreateFactions()
@@ -64,6 +55,16 @@ public class WorldManager : MonoBehaviour
     {
         return factions.Find(f => f.Id == id);
     }
+
+    public void UpdateFactionPower(Faction faction)
+    {
+        // For MVP: 1 cell = 1 power
+        faction.Power = faction.ControlledCellIds.Count;
+
+        // Debug display
+        Debug.Log($"{faction.Name} has {faction.Power} power.");
+    }
+
 
     void AssignStartingCells()
     {
@@ -89,6 +90,8 @@ public class WorldManager : MonoBehaviour
 
         cell.ControllingFactionId = faction.Id;
         faction.ControlledCellIds.Add(cell.id);
+
+        AddDebugBuilding(cell, faction.Id, 210f, 0.34f);
         Debug.Log($"{faction.Name} assigned cell {cell.id}");
 
     }
@@ -97,27 +100,26 @@ public class WorldManager : MonoBehaviour
     {
         var cell = WorldCells[cellId];
 
-        // If already owned by this faction, nothing changes
         if (cell.ControllingFactionId == factionId)
             return;
 
-        // Remove from previous owner
         if (cell.ControllingFactionId != -1)
         {
             var oldFaction = GetFactionById(cell.ControllingFactionId);
             if (oldFaction != null)
             {
                 oldFaction.ControlledCellIds.Remove(cell.id);
+                UpdateFactionPower(oldFaction);
             }
         }
 
-        // Assign to new owner
         cell.ControllingFactionId = factionId;
 
         var newFaction = GetFactionById(factionId);
         if (newFaction != null)
         {
             newFaction.ControlledCellIds.Add(cell.id);
+            UpdateFactionPower(newFaction);
         }
 
         Debug.Log($"Cell {cellId} claimed by faction {factionId}");
@@ -125,5 +127,43 @@ public class WorldManager : MonoBehaviour
 
 
 
+    public List<int> GetClaimableNeighborCells(Faction faction)
+    {
+        HashSet<int> claimable = new HashSet<int>();
+
+        foreach (var cellId in faction.ControlledCellIds)
+        {
+            var cell = WorldCells[cellId];
+
+            foreach (var neighborId in cell.neighborIDs)
+            {
+                var neighbor = WorldCells[neighborId];
+
+                // Can claim if neutral or owned by another faction
+                if (neighbor.ControllingFactionId != faction.Id)
+                {
+                    claimable.Add(neighborId);
+                }
+            }
+        }
+
+        return claimable.ToList();
+    }
+
+
+    public static void AddDebugBuilding(VoronoiCell cell, int factionId, float baseInfluence, float spreadPercent)
+    {
+        var building = new Building
+        {
+            OwnerFactionId = factionId,
+            BaseInfluence = baseInfluence,
+            NeighborInfluencePercent = spreadPercent,
+            InfluenceRadius = spreadPercent > 0 ? 1 : 0
+        };
+
+        cell.Buildings.Add(building);
+
+        InfluenceManager.RecalculateAll();
+    }
 
 }

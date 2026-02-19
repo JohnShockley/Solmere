@@ -28,7 +28,14 @@ public static class Voronoi
         public NodeType nodeType;
         public double height;
         public bool used;
+        public float RequiredInfluence = 100f;
         public int ControllingFactionId = -1;
+
+        public List<Building> Buildings = new();
+        public List<VoronoiCell> Neighbors = new();
+
+        // Recalculated each time
+        public Dictionary<int, float> InfluenceByFaction = new();
     }
     [System.Serializable]
     public struct IslandData
@@ -39,7 +46,7 @@ public static class Voronoi
         public double sharpness;
     }
 
-    public static List<VoronoiCell> CreateVoronoi(VoronoiData voronoiData,  List<Vector2> polygon)
+    public static List<VoronoiCell> CreateVoronoi(VoronoiData voronoiData, List<Vector2> polygon)
     {
         int seed = voronoiData.seed;
         int relaxations = voronoiData.relaxations;
@@ -87,6 +94,15 @@ public static class Voronoi
             voronoiCells.Add(cell);
 
         }
+        // Link neighbor references
+        foreach (var cell in voronoiCells)
+        {
+            foreach (var neighborId in cell.neighborIDs)
+            {
+                cell.Neighbors.Add(voronoiCells[neighborId]);
+            }
+        }
+
         AddIsland(voronoiData);
         return voronoiCells;
     }
